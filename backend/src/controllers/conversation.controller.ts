@@ -21,13 +21,12 @@ const conversationController = {
             let conversation;
             if (type === 'direct') {
                 const participantId = memberIds[0];
-                conversation = await prisma.conversation.findFirst({
+                const existingConversations = await prisma.conversation.findMany({
                     where: {
                         type: 'direct',
-                        AND: [
-                            { participants: { some: { userId } } },
-                            { participants: { some: { userId: participantId } } }
-                        ]
+                        participants: {
+                            some: { userId }
+                        }
                     },
                     include: {
                         participants: {
@@ -42,6 +41,10 @@ const conversationController = {
                         }
                     }
                 });
+
+                conversation = existingConversations.find((c) =>
+                    c.participants.some((p) => p.userId === participantId)
+                );
 
                 if (!conversation) {
                     conversation = await prisma.conversation.create({

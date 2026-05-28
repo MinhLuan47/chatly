@@ -109,13 +109,12 @@ const friendController = {
             });
 
             // Tự động tạo cuộc hội thoại trực tiếp giữa hai người nếu chưa tồn tại
-            let conversation = await prisma.conversation.findFirst({
+            const existingConversations = await prisma.conversation.findMany({
                 where: {
                     type: 'direct',
-                    AND: [
-                        { participants: { some: { userId: sortedA } } },
-                        { participants: { some: { userId: sortedB } } }
-                    ]
+                    participants: {
+                        some: { userId: sortedA }
+                    }
                 },
                 include: {
                     participants: {
@@ -130,6 +129,10 @@ const friendController = {
                     }
                 }
             });
+
+            let conversation = existingConversations.find((c) =>
+                c.participants.some((p) => p.userId === sortedB)
+            );
 
             if (!conversation) {
                 conversation = await prisma.conversation.create({

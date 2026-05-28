@@ -5,8 +5,8 @@ const StatusBadge = ({ status }: { status: 'online' | 'offline' }) => {
         <div
             className={cn(
                 'absolute  -bottom-0.5 -right-0.5 size-4 rounded-full border-2 border-card',
-                status === 'online' && 'bg-status-online',
-                status === 'offline' && 'bg-status-offline',
+                status === 'online' && 'status-online',
+                status === 'offline' && 'status-offline',
             )}
         ></div>
     );

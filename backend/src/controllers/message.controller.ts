@@ -17,15 +17,21 @@ const messageController = {
 
             if (!conversationId) {
                 // Find existing direct conversation between these two participants
-                const existing = await prisma.conversation.findFirst({
+                const existingConversations = await prisma.conversation.findMany({
                     where: {
                         type: 'direct',
-                        AND: [
-                            { participants: { some: { userId: senderId } } },
-                            { participants: { some: { userId: recipientId } } }
-                        ]
+                        participants: {
+                            some: { userId: senderId }
+                        }
+                    },
+                    include: {
+                        participants: true
                     }
                 });
+
+                const existing = existingConversations.find((c) =>
+                    c.participants.some((p) => p.userId === recipientId)
+                );
 
                 if (existing) {
                     conversation = existing;

@@ -28,12 +28,12 @@ const ChatCard: React.FC<ChatCardProps> = ({
         <Card
             key={converId}
             className={cn(
-                'flex cursor-pointer items-center gap-3 border-none p-3 transition-all glass hover:bg-muted/30',
+                'flex cursor-pointer  items-center gap-3 border-none p-3 transition-all glass hover:bg-muted/30',
                 isActive && 'ring-2 ring-primary/50 bg-linear-to-tr from-primary-glow/10 to-primary-foreground',
             )}
             onClick={() => onSelect(converId)}
         >
-            <div className="flex items-center gap-3">
+            <div className="w-full flex justify-between items-center gap-3">
                 <div className="relative">{leftSection}</div>
                 <div className="flex-1 min-w-0 ">
                     <div className="flex items-center justify-between mb-1">

@@ -4,14 +4,20 @@ import { MessageCircle, Users } from 'lucide-react';
 import UserAvatar from '../chat/UserAvatar';
 import { Card } from '../ui/card';
 import { DialogContent, DialogHeader, DialogTitle } from '../ui/dialog';
+import { useEffect } from 'react';
 
 const FriendListModal = () => {
-    const { friends } = useFriendStore();
+    const { friends, getFriends } = useFriendStore();
     const { createConversation } = useChatStore();
+
+    useEffect(() => {
+        getFriends();
+    }, [getFriends]);
 
     const handleAddConversation = async (friendId: string) => {
         await createConversation('direct', '', [friendId]);
     };
+
     return (
         <DialogContent className="glass max-w-md">
             <DialogHeader>
@@ -41,7 +47,6 @@ const FriendListModal = () => {
                                 </div>
 
                                 {/* info */}
-
                                 <div className="flex-1 min-w-0 flex flex-col">
                                     <h2 className="font-semibold text-sm truncate">{friend.displayName}</h2>
                                     <span className="text-sm text-muted-foreground">@{friend.username}</span>
