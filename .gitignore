@@ -1,0 +1,121 @@
+# =========================
+# Dependencies
+# =========================
+node_modules/
+**/node_modules/
+
+# =========================
+# Environment variables
+# =========================
+.env
+.env.*
+!.env.example
+
+backend/.env
+backend/.env.*
+frontend/.env
+frontend/.env.*
+frontend/.env.development
+frontend/.env.production
+
+# =========================
+# Build outputs
+# =========================
+dist/
+build/
+.next/
+out/
+coverage/
+
+backend/dist/
+backend/build/
+
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# =========================
+# Logs
+# =========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Runtime files
+# =========================
+*.pid
+*.seed
+*.pid.lock
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# =========================
+# Editor / IDE
+# =========================
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# =========================
+# TypeScript
+# =========================
+*.tsbuildinfo
+
+# =========================
+# Vite / Frontend cache
+# =========================
+.vite/
+frontend/.vite/
+
+# =========================
+# ESLint / Prettier cache
+# =========================
+.eslintcache
+.prettiercache
+
+# =========================
+# Package manager cache
+# =========================
+.pnpm-store/
+.yarn/
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+# =========================
+# Uploads / generated files
+# =========================
+uploads/
+tmp/
+temp/
+
+backend/uploads/
+backend/tmp/
+backend/temp/
+
+# =========================
+# Database / local storage
+# =========================
+*.sqlite
+*.sqlite3
+*.db
+
+# =========================
+# Docker override files
+# =========================
+docker-compose.override.yml
