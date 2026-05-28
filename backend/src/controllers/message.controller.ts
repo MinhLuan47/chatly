@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import Conversation from '../models/conversation.model.ts';
-import Message from '../models/message.model.ts';
+import prisma from '../libs/prisma.ts';
 import { emitNewMessage, updateConversationAfterCreateMessage } from '../utils/messageHelper.ts';
 import { io } from '../socket/index.ts';
+
 const messageController = {
     sendDirectMessage: async (req: Request, res: Response) => {
         try {
@@ -16,29 +16,58 @@ const messageController = {
             }
 
             if (!conversationId) {
-                conversation = await Conversation.create({
-                    type: 'direct',
-                    participants: [
-                        { userId: senderId, joinedAt: new Date() },
-                        { userId: recipientId, joinedAt: new Date() },
-                    ],
-                    lastMessageAt: new Date(),
+                // Find existing direct conversation between these two participants
+                const existing = await prisma.conversation.findFirst({
+                    where: {
+                        type: 'direct',
+                        AND: [
+                            { participants: { some: { userId: senderId } } },
+                            { participants: { some: { userId: recipientId } } }
+                        ]
+                    }
                 });
+
+                if (existing) {
+                    conversation = existing;
+                } else {
+                    conversation = await prisma.conversation.create({
+                        data: {
+                            type: 'direct',
+                            lastMessageAt: new Date(),
+                        }
+                    });
+
+                    // Create Participant records for both users
+                    await prisma.participant.createMany({
+                        data: [
+                            { conversationId: conversation.id, userId: senderId! },
+                            { conversationId: conversation.id, userId: recipientId }
+                        ]
+                    });
+                }
             } else {
-                conversation = await Conversation.findById(conversationId);
+                conversation = await prisma.conversation.findUnique({
+                    where: { id: conversationId }
+                });
             }
 
-            const message = await Message.create({
-                conversationId: conversation?._id,
-                senderId,
-                content,
+            if (!conversation) {
+                res.status(404).json({ message: 'Không tìm thấy cuộc trò chuyện' });
+                return;
+            }
+
+            const message = await prisma.message.create({
+                data: {
+                    conversationId: conversation.id,
+                    senderId: senderId!,
+                    content,
+                }
             });
 
-            updateConversationAfterCreateMessage(conversation, message, senderId);
-            conversation!!.save();
-            emitNewMessage(io, conversation, message);
+            await updateConversationAfterCreateMessage(conversation.id, message, senderId!);
+            await emitNewMessage(io, conversation.id, message, senderId!);
 
-            res.status(200).json({ success: true, message });
+            res.status(200).json({ success: true, message: { ...message, _id: message.id } });
         } catch (error) {
             console.error('Lỗi khi gửi tin nhắn  =>', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });
@@ -54,15 +83,18 @@ const messageController = {
                 return;
             }
 
-            const message = await Message.create({
-                conversationId,
-                senderId,
-                content,
+            const message = await prisma.message.create({
+                data: {
+                    conversationId,
+                    senderId: senderId!,
+                    content,
+                }
             });
-            //d updateConversationAfterCreateMessage(message.conversation, message, senderId);
-            // emitNewMessage(io, conversation, message);
 
-            res.status(200).json({ success: true, message });
+            await updateConversationAfterCreateMessage(conversationId, message, senderId!);
+            await emitNewMessage(io, conversationId, message, senderId!);
+
+            res.status(200).json({ success: true, message: { ...message, _id: message.id } });
         } catch (error) {
             console.error('Lỗi khi gửi tin nhắn nhóm  =>', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });
@@ -71,3 +103,4 @@ const messageController = {
 };
 
 export default messageController;
+

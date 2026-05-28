@@ -1,30 +1,68 @@
-export const updateConversationAfterCreateMessage = (conversation: any, message: any, senderId: any) => {
-    conversation.set({
-        seenBy: [],
-        lastMessageAt: message.createdAt,
-        lastMessage: {
-            _id: message._id,
-            senderId: senderId,
-            content: message.content,
-            createdAt: message.createdAt,
-        },
+import prisma from '../libs/prisma.ts';
+
+export const updateConversationAfterCreateMessage = async (conversationId: string, message: any, senderId: string) => {
+    // 1. Update conversation lastMessage link and timestamp
+    await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+            lastMessageId: message.id,
+            lastMessageAt: message.createdAt
+        }
     });
-    conversation.participants.forEach((participant: any) => {
-        const memberId = participant.userId.toString();
-        const isSender = memberId === senderId;
-        const prevCount = conversation.unreadCounts.get(memberId) || 0;
-        conversation.unreadCounts.set(memberId, isSender ? 0 : prevCount + 1);
+
+    // 2. Reset unreadCount for the sender, and set their lastSeenAt
+    await prisma.participant.update({
+        where: {
+            conversationId_userId: {
+                conversationId,
+                userId: senderId
+            }
+        },
+        data: {
+            unreadCount: 0,
+            lastSeenAt: message.createdAt
+        }
+    });
+
+    // 3. Increment unreadCount for all other participants
+    await prisma.participant.updateMany({
+        where: {
+            conversationId,
+            NOT: {
+                userId: senderId
+            }
+        },
+        data: {
+            unreadCount: {
+                increment: 1
+            }
+        }
     });
 };
 
-export const emitNewMessage = (io: any, conversation: any, message: any) => {
-    io.to(conversation._id).emit('newMessage', {
-        message,
+export const emitNewMessage = async (io: any, conversationId: string, message: any, senderId: string) => {
+    // Get updated unread counts to emit to the room
+    const participants = await prisma.participant.findMany({
+        where: { conversationId }
+    });
+
+    const unreadCounts: Record<string, number> = {};
+    participants.forEach((p) => {
+        unreadCounts[p.userId] = p.unreadCount;
+    });
+
+    io.to(conversationId).emit('newMessage', {
+        message: { ...message, _id: message.id },
         conversation: {
-            _id: conversation._id,
-            lastMessage: conversation.lastMessage,
-            lastMessageAt: conversation.lastMessageAt,
+            _id: conversationId,
+            lastMessage: {
+                _id: message.id,
+                senderId: senderId,
+                content: message.content,
+                createdAt: message.createdAt,
+            },
+            lastMessageAt: message.createdAt,
         },
-        unreadCounts: conversation.unreadCounts,
+        unreadCounts,
     });
 };
