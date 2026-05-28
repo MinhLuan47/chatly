@@ -179,7 +179,9 @@ export const useChatStore = create<ChatState>()(
                         };
                     }
                     return {
-                        conversations: state.conversations.map((c: any) => (c.id === conversation.id ? conversation : c)),
+                        conversations: state.conversations.map((c: any) =>
+                            c.id === conversation.id ? { ...c, ...conversation } : c
+                        ),
                     };
                 });
             },
