@@ -1,10 +1,9 @@
+import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
-import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { IUserCreate } from '../interfaces/user.interface.ts';
-import Session from '../models/session.model.ts';
-import User from '../models/user.model.ts';
+import prisma from '../libs/prisma.ts';
 
 const ACCESS_TOKEN_TTL = 1000 * 60 * 15; // 15m
 const REFRESH_TOKEN_TTL = 1000 * 60 * 60 * 24 * 14; // 14d
@@ -18,17 +17,27 @@ const authController = {
                 return;
             }
 
-            const existingUser = await User.findOne({ username: data.username, email: data.email });
+            const existingUser = await prisma.user.findFirst({
+                where: {
+                    OR: [
+                        { username: data.username },
+                        { email: data.email }
+                    ]
+                }
+            });
             if (existingUser) {
                 res.status(409).json({ message: 'User already exists' });
                 return;
             }
 
             const hashPassword = await bcrypt.hash(data.password, 10);
-            await User.create({
-                ...data,
-                hashPassword,
-                displayName: `${data.lastName} ${data.firstName}`,
+            await prisma.user.create({
+                data: {
+                    username: data.username,
+                    email: data.email,
+                    hashPassword,
+                    displayName: `${data.lastName} ${data.firstName}`,
+                },
             });
             res.status(201).json({
                 success: true,
@@ -43,13 +52,15 @@ const authController = {
         try {
             const { username, password } = req.body;
 
-            const user = await User.findOne({ username }).lean();
+            const user = await prisma.user.findUnique({
+                where: { username }
+            });
             if (!user) {
                 res.status(401).json({ message: 'Sai tài khoản hoặc mật khẩu' });
                 return;
             }
 
-            const isMatch = bcrypt.compare(password, user.hashPassword);
+            const isMatch = await bcrypt.compare(password, user.hashPassword);
             if (!isMatch) {
                 res.status(401).json({ message: 'Sai tài khoản hoặc mật khẩu' });
                 return;
@@ -58,7 +69,7 @@ const authController = {
             //tạo token
             const accessToken = jwt.sign(
                 {
-                    userId: user._id,
+                    userId: user.id,
                 },
                 process.env.ACCESS_TOKEN_SECRET as string,
                 {
@@ -67,10 +78,12 @@ const authController = {
             );
 
             const refreshToken = crypto.randomBytes(64).toString('hex');
-            await Session.create({
-                userId: user._id,
-                refreshToken,
-                expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+            await prisma.session.create({
+                data: {
+                    userId: user.id,
+                    refreshToken,
+                    expiresAt: new Date(Date.now() + REFRESH_TOKEN_TTL),
+                }
             });
 
             res.cookie('refreshToken', refreshToken, {
@@ -86,13 +99,18 @@ const authController = {
             res.status(500).json({ message: 'Lỗi hệ thống' });
         }
     },
-    signout: (req: Request, res: Response) => {
+    signout: async (req: Request, res: Response) => {
         try {
             const token = req.cookies?.refreshToken;
             if (!token) {
                 res.status(400).json({ message: 'Chưa đăng nhập' });
                 return;
             }
+
+            // Xóa session trong database
+            await prisma.session.deleteMany({
+                where: { refreshToken: token }
+            });
 
             res.clearCookie('refreshToken');
             res.status(200).json({ success: true, message: 'Đăng xuất thành công' });
@@ -109,7 +127,9 @@ const authController = {
                 return;
             }
 
-            const session = await Session.findOne({ refreshToken: token }).lean();
+            const session = await prisma.session.findUnique({
+                where: { refreshToken: token }
+            });
             if (!session) {
                 res.status(403).json({ success: false, message: 'Token không hợp lệ hoặc đã hết hạn' });
                 return;
@@ -138,3 +158,4 @@ const authController = {
 };
 
 export default authController;
+
