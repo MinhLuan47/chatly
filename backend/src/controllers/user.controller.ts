@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { uploadImageFromBuffer } from '../middlewares/upload.middleware';
-import User from '../models/user.model';
+import prisma from '../libs/prisma.ts';
 
 const userController = {
     authMe: async (req: Request, res: Response) => {
@@ -21,8 +21,17 @@ const userController = {
                 return;
             }
 
-            const user = await User.findOne({ username }).select('_id username displayName avatarUrl').lean();
-            res.status(200).json({ success: true, user });
+            const user = await prisma.user.findUnique({
+                where: { username: username.toString() },
+                select: {
+                    id: true,
+                    username: true,
+                    displayName: true,
+                    avatarUrl: true,
+                }
+            });
+            const mappedUser = user ? { ...user, _id: user.id } : null;
+            res.status(200).json({ success: true, user: mappedUser });
         } catch (error) {
             console.log('Lỗi tại userController, searchUserByUserName: ', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });
@@ -40,11 +49,11 @@ const userController = {
 
             const result = (await uploadImageFromBuffer(file.buffer, {})) as { secure_url: string; public_id: string };
 
-            const updatedUser = await User.findByIdAndUpdate(
-                userId,
-                { avatarUrl: result.secure_url, avatarId: result.public_id },
-                { new: true },
-            ).select(' avatarUrl');
+            const updatedUser = await prisma.user.update({
+                where: { id: userId! },
+                data: { avatarUrl: result.secure_url, avatarId: result.public_id },
+                select: { avatarUrl: true }
+            });
 
             if (!updatedUser || !updatedUser.avatarUrl) {
                 res.status(400).json({ message: 'Avatar trả về null' });
@@ -60,3 +69,4 @@ const userController = {
 };
 
 export default userController;
+
