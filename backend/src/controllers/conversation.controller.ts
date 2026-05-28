@@ -1,8 +1,6 @@
 import { io } from '../socket/index.ts';
 import { Request, Response } from 'express';
-import Conversation from '../models/conversation.model.ts';
-import mongoose from 'mongoose';
-import Message from '../models/message.model.ts';
+import prisma from '../libs/prisma.ts';
 
 const conversationController = {
     createConversation: async (req: Request, res: Response) => {
@@ -14,7 +12,7 @@ const conversationController = {
                 !type ||
                 (type === 'group' && !name) ||
                 !memberIds ||
-                Array.isArray(memberIds) ||
+                !Array.isArray(memberIds) ||
                 memberIds.length === 0
             ) {
                 res.status(400).json({ message: 'Tên nhóm và danh sách thành viên là bắt buộc' });
@@ -23,70 +21,172 @@ const conversationController = {
             let conversation;
             if (type === 'direct') {
                 const participantId = memberIds[0];
-                conversation = await Conversation.findOne({
-                    type: 'direct',
-                    'participants.userId': { $all: [userId, participantId] },
-                });
-                if (!conversation) {
-                    conversation = new Conversation({
+                conversation = await prisma.conversation.findFirst({
+                    where: {
                         type: 'direct',
-                        participants: [
-                            { userId: userId, joinedAt: new Date() },
-                            { userId: participantId, joinedAt: new Date() },
-                        ],
-                        lastMessageAt: new Date(),
+                        AND: [
+                            { participants: { some: { userId } } },
+                            { participants: { some: { userId: participantId } } }
+                        ]
+                    },
+                    include: {
+                        participants: {
+                            include: {
+                                user: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        },
+                        lastMessage: {
+                            include: {
+                                sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        }
+                    }
+                });
+
+                if (!conversation) {
+                    conversation = await prisma.conversation.create({
+                        data: {
+                            type: 'direct',
+                            lastMessageAt: new Date(),
+                        },
+                        include: {
+                            participants: {
+                                include: {
+                                    user: { select: { id: true, displayName: true, avatarUrl: true } }
+                                }
+                            },
+                            lastMessage: {
+                                include: {
+                                    sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                                }
+                            }
+                        }
                     });
-                    await conversation.save();
+
+                    await prisma.participant.createMany({
+                        data: [
+                            { conversationId: conversation.id, userId: userId! },
+                            { conversationId: conversation.id, userId: participantId }
+                        ]
+                    });
+
+                    // Re-fetch populated conversation
+                    conversation = await prisma.conversation.findUnique({
+                        where: { id: conversation.id },
+                        include: {
+                            participants: {
+                                include: {
+                                    user: { select: { id: true, displayName: true, avatarUrl: true } }
+                                }
+                            },
+                            lastMessage: {
+                                include: {
+                                    sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                                }
+                            }
+                        }
+                    }) || conversation;
                 }
             }
 
             if (type === 'group') {
-                conversation = new Conversation({
-                    type: 'group',
-                    group: {
+                conversation = await prisma.conversation.create({
+                    data: {
+                        type: 'group',
                         name,
-                        createdBy: userId,
+                        createdById: userId,
+                        lastMessageAt: new Date(),
                     },
-                    participants: [
-                        { userId: new mongoose.Types.ObjectId(userId), joinedAt: new Date() },
-                        ...memberIds.map((id: string) => ({
-                            userId: new mongoose.Types.ObjectId(id),
-                            joinedAt: new Date(),
-                        })),
-                    ],
-                    lastMessageAt: new Date(),
+                    include: {
+                        participants: {
+                            include: {
+                                user: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        },
+                        lastMessage: {
+                            include: {
+                                sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        }
+                    }
                 });
-                await conversation.save();
+
+                const allMemberIds = Array.from(new Set([userId!, ...memberIds]));
+                await prisma.participant.createMany({
+                    data: allMemberIds.map((id: string) => ({
+                        conversationId: conversation!.id,
+                        userId: id,
+                    }))
+                });
+
+                // Re-fetch populated conversation
+                conversation = await prisma.conversation.findUnique({
+                    where: { id: conversation.id },
+                    include: {
+                        participants: {
+                            include: {
+                                user: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        },
+                        lastMessage: {
+                            include: {
+                                sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        }
+                    }
+                }) || conversation;
             }
+
             if (!conversation) {
                 res.status(400).json({ message: 'Conversation type không hợp lệ' });
                 return;
             }
 
-            await conversation.populate([
-                {
-                    path: 'participants.userId',
-                    select: '_id displayName avatarUrl',
-                },
-                {
-                    path: 'seenBy',
-                    select: '_id displayName avatarUrl',
-                },
-                {
-                    path: 'lastMessage.senderId',
-                    select: '_id displayName avatarUrl',
-                },
-            ]);
             const participants = (conversation.participants || []).map((p: any) => ({
-                _id: p.userId._id,
-                displayName: p.userId?.displayName,
-                avatarUrl: p.userId?.avatarUrl ?? null,
+                _id: p.userId,
+                displayName: p.user?.displayName,
+                avatarUrl: p.user?.avatarUrl ?? null,
                 joinedAt: p.joinedAt,
             }));
 
+            const seenBy = (conversation.participants || [])
+                .filter((p: any) => p.lastSeenAt && conversation!.lastMessageAt && p.lastSeenAt >= conversation!.lastMessageAt)
+                .map((p: any) => ({
+                    _id: p.userId,
+                    displayName: p.user?.displayName,
+                    avatarUrl: p.user?.avatarUrl ?? null,
+                }));
+
+            const unreadCounts: Record<string, number> = {};
+            (conversation.participants || []).forEach((p: any) => {
+                unreadCounts[p.userId] = p.unreadCount;
+            });
+
             const formatted = {
-                ...conversation.toObject(),
-                unreadCounts: conversation.unreadCounts || {},
+                _id: conversation.id,
+                id: conversation.id,
+                type: conversation.type,
+                name: conversation.name,
+                group: conversation.type === 'group' ? {
+                    name: conversation.name,
+                    createdBy: conversation.createdById,
+                    avatarUrl: conversation.groupAvatarUrl,
+                } : null,
+                lastMessageAt: conversation.lastMessageAt,
+                createdAt: conversation.createdAt,
+                updatedAt: conversation.updatedAt,
+                lastMessage: conversation.lastMessage ? {
+                    _id: conversation.lastMessage.id,
+                    content: conversation.lastMessage.content,
+                    createdAt: conversation.lastMessage.createdAt,
+                    senderId: conversation.lastMessage.sender ? {
+                        _id: conversation.lastMessage.senderId,
+                        displayName: conversation.lastMessage.sender.displayName,
+                        avatarUrl: conversation.lastMessage.sender.avatarUrl,
+                    } : null
+                } : null,
+                seenBy,
+                unreadCounts,
                 participants,
             };
 
@@ -105,35 +205,79 @@ const conversationController = {
     getConversations: async (req: Request, res: Response) => {
         try {
             const userId = req.user._id?.toString();
-            const conversations = await Conversation.find({
-                'participants.userId': userId,
-            })
-                .sort({ lastMessageAt: -1, updatedAt: -1 })
-                .populate([
-                    {
-                        path: 'participants.userId',
-                        select: '_id displayName avatarUrl',
+            
+            const userParticipants = await prisma.participant.findMany({
+                where: { userId },
+                select: { conversationId: true }
+            });
+            const conversationIds = userParticipants.map(up => up.conversationId);
+
+            const conversations = await prisma.conversation.findMany({
+                where: { id: { in: conversationIds } },
+                orderBy: [
+                    { lastMessageAt: 'desc' },
+                    { updatedAt: 'desc' }
+                ],
+                include: {
+                    participants: {
+                        include: {
+                            user: { select: { id: true, displayName: true, avatarUrl: true } }
+                        }
                     },
-                    {
-                        path: 'seenBy',
-                        select: '_id displayName avatarUrl',
-                    },
-                    {
-                        path: 'lastMessage.senderId',
-                        select: '_id displayName avatarUrl',
-                    },
-                ]);
+                    lastMessage: {
+                        include: {
+                            sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                        }
+                    }
+                }
+            });
+
             const formattedConversations = conversations.map((conver) => {
                 const participants = (conver.participants || []).map((p: any) => ({
-                    _id: p.userId._id,
-                    displayName: p.userId?.displayName,
-                    avatarUrl: p.userId?.avatarUrl ?? null,
+                    _id: p.userId,
+                    displayName: p.user?.displayName,
+                    avatarUrl: p.user?.avatarUrl ?? null,
                     joinedAt: p.joinedAt,
                 }));
 
+                const seenBy = (conver.participants || [])
+                    .filter((p: any) => p.lastSeenAt && conver.lastMessageAt && p.lastSeenAt >= conver.lastMessageAt)
+                    .map((p: any) => ({
+                        _id: p.userId,
+                        displayName: p.user?.displayName,
+                        avatarUrl: p.user?.avatarUrl ?? null,
+                    }));
+
+                const unreadCounts: Record<string, number> = {};
+                (conver.participants || []).forEach((p: any) => {
+                    unreadCounts[p.userId] = p.unreadCount;
+                });
+
                 return {
-                    ...conver.toObject(),
-                    unreadCounts: conver.unreadCounts || {},
+                    _id: conver.id,
+                    id: conver.id,
+                    type: conver.type,
+                    name: conver.name,
+                    group: conver.type === 'group' ? {
+                        name: conver.name,
+                        createdBy: conver.createdById,
+                        avatarUrl: conver.groupAvatarUrl,
+                    } : null,
+                    lastMessageAt: conver.lastMessageAt,
+                    createdAt: conver.createdAt,
+                    updatedAt: conver.updatedAt,
+                    lastMessage: conver.lastMessage ? {
+                        _id: conver.lastMessage.id,
+                        content: conver.lastMessage.content,
+                        createdAt: conver.lastMessage.createdAt,
+                        senderId: conver.lastMessage.sender ? {
+                            _id: conver.lastMessage.senderId,
+                            displayName: conver.lastMessage.sender.displayName,
+                            avatarUrl: conver.lastMessage.sender.avatarUrl,
+                        } : null
+                    } : null,
+                    seenBy,
+                    unreadCounts,
                     participants,
                 };
             });
@@ -148,25 +292,31 @@ const conversationController = {
         try {
             const { conversationId } = req.params;
             const { limit = 50, cursor } = req.query;
-            const query: any = { conversationId };
+            
+            const take = Number(limit) + 1;
+            const queryOptions: any = {
+                where: { conversationId },
+                orderBy: { createdAt: 'desc' },
+                take
+            };
 
             if (cursor) {
-                query.createdAt = { $lt: new Date(cursor.toString()) };
+                queryOptions.cursor = { id: cursor.toString() };
+                queryOptions.skip = 1;
             }
 
-            let messages = await Message.find(query)
-                .sort({ createdAt: -1 })
-                .limit(Number(limit) + 1);
-
+            let messages = await prisma.message.findMany(queryOptions);
             let nextCursor = null;
 
             if (messages.length > Number(limit)) {
-                nextCursor = messages[messages.length - 1].createdAt.toISOString();
+                nextCursor = messages[messages.length - 1].id;
                 messages.pop();
             }
             messages = messages.reverse();
 
-            res.status(200).json({ success: true, messages, nextCursor });
+            const formattedMessages = messages.map(m => ({ ...m, _id: m.id }));
+
+            res.status(200).json({ success: true, messages: formattedMessages, nextCursor });
         } catch (error) {
             console.log('Lỗi tại conversationController, getMessages =>', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });
@@ -174,13 +324,11 @@ const conversationController = {
     },
     getUserConversationIds: async (userId: string) => {
         try {
-            const conversations = await Conversation.find(
-                {
-                    'participants.userId': userId,
-                },
-                { _id: 1 },
-            );
-            return conversations.map((conver) => conver._id.toString());
+            const participants = await prisma.participant.findMany({
+                where: { userId },
+                select: { conversationId: true }
+            });
+            return participants.map((p) => p.conversationId);
         } catch (error) {
             console.log('Lỗi tại conversationController, getUserConversationIds =>', error);
             return [];
@@ -191,7 +339,12 @@ const conversationController = {
             const { conversationId } = req.params;
             const userId = req.user._id?.toString();
 
-            const conversation = await Conversation.findById(conversationId);
+            const conversation = await prisma.conversation.findUnique({
+                where: { id: conversationId },
+                include: {
+                    lastMessage: true
+                }
+            });
             if (!conversation) {
                 res.status(404).json({ message: 'Không tìm thấy conversation' });
                 return;
@@ -204,30 +357,98 @@ const conversationController = {
                 return;
             }
 
-            if (lastMessage.senderId?.toString() === userId) {
+            if (lastMessage.senderId === userId) {
                 res.status(200).json({ message: 'Sender không cần mark as seen' });
                 return;
             }
 
-            const updated = await Conversation.findByIdAndUpdate(
-                conversationId,
-                {
-                    $addToSet: { seenBy: userId },
-                    $set: { [`unreadCounts.${userId}`]: 0 },
+            // Update participant lastSeenAt and reset unreadCount
+            await prisma.participant.update({
+                where: {
+                    conversationId_userId: {
+                        conversationId,
+                        userId: userId!
+                    }
                 },
-                {
-                    new: true,
-                },
-            );
+                data: {
+                    unreadCount: 0,
+                    lastSeenAt: lastMessage.createdAt
+                }
+            });
+
+            // Re-fetch conversation to construct updated state
+            const updatedConversation = await prisma.conversation.findUnique({
+                where: { id: conversationId },
+                include: {
+                    participants: {
+                        include: {
+                            user: { select: { id: true, displayName: true, avatarUrl: true } }
+                        }
+                    },
+                    lastMessage: {
+                        include: {
+                            sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                        }
+                    }
+                }
+            });
+
+            const participants = (updatedConversation!.participants || []).map((p: any) => ({
+                _id: p.userId,
+                displayName: p.user?.displayName,
+                avatarUrl: p.user?.avatarUrl ?? null,
+                joinedAt: p.joinedAt,
+            }));
+
+            const seenBy = (updatedConversation!.participants || [])
+                .filter((p: any) => p.lastSeenAt && updatedConversation!.lastMessageAt && p.lastSeenAt >= updatedConversation!.lastMessageAt)
+                .map((p: any) => ({
+                    _id: p.userId,
+                    displayName: p.user?.displayName,
+                    avatarUrl: p.user?.avatarUrl ?? null,
+                }));
+
+            const unreadCounts: Record<string, number> = {};
+            (updatedConversation!.participants || []).forEach((p: any) => {
+                unreadCounts[p.userId] = p.unreadCount;
+            });
+
+            const formattedConversation = {
+                _id: updatedConversation!.id,
+                id: updatedConversation!.id,
+                type: updatedConversation!.type,
+                name: updatedConversation!.name,
+                group: updatedConversation!.type === 'group' ? {
+                    name: updatedConversation!.name,
+                    createdBy: updatedConversation!.createdById,
+                    avatarUrl: updatedConversation!.groupAvatarUrl,
+                } : null,
+                lastMessageAt: updatedConversation!.lastMessageAt,
+                createdAt: updatedConversation!.createdAt,
+                updatedAt: updatedConversation!.updatedAt,
+                lastMessage: updatedConversation!.lastMessage ? {
+                    _id: updatedConversation!.lastMessage.id,
+                    content: updatedConversation!.lastMessage.content,
+                    createdAt: updatedConversation!.lastMessage.createdAt,
+                    senderId: updatedConversation!.lastMessage.sender ? {
+                        _id: updatedConversation!.lastMessage.senderId,
+                        displayName: updatedConversation!.lastMessage.sender.displayName,
+                        avatarUrl: updatedConversation!.lastMessage.sender.avatarUrl,
+                    } : null
+                } : null,
+                seenBy,
+                unreadCounts,
+                participants,
+            };
 
             io.to(conversationId).emit('readMessage', {
-                conversation: updated,
+                conversation: formattedConversation,
                 lastMessage: {
-                    _id: updated?.lastMessage?._id,
-                    content: updated?.lastMessage?.content,
-                    createdAt: updated?.lastMessage?.createdAt,
+                    _id: updatedConversation!.lastMessage?.id,
+                    content: updatedConversation!.lastMessage?.content,
+                    createdAt: updatedConversation!.lastMessage?.createdAt,
                     senderId: {
-                        _id: updated?.lastMessage?._id,
+                        _id: updatedConversation!.lastMessage?.senderId,
                     },
                 },
             });
@@ -235,8 +456,8 @@ const conversationController = {
             res.status(200).json({
                 success: true,
                 message: 'Mark as seen ',
-                seenBy: updated?.seenBy || [],
-                myUnreadCount: updated?.unreadCounts?.[userId] || 0,
+                seenBy,
+                myUnreadCount: 0,
             });
         } catch (error) {
             console.log('Lỗi tại conversationController, markAsSeen =>', error);
@@ -248,3 +469,4 @@ const conversationController = {
 };
 
 export default conversationController;
+

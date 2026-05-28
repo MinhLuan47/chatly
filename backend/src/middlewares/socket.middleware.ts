@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import User from '../models/user.model.ts';
+import prisma from '../libs/prisma.ts';
 
 export const socketAuthMiddleware = async (socket: any, next: any) => {
     try {
@@ -11,11 +11,27 @@ export const socketAuthMiddleware = async (socket: any, next: any) => {
         if (!decoded) {
             return next(new Error('Authentication error'));
         }
-        const user = await User.findById(decoded.userId).select('-_hashPassword');
-        socket.user = user;
+        const user = await prisma.user.findUnique({
+            where: { id: decoded.userId },
+            select: {
+                id: true,
+                username: true,
+                email: true,
+                displayName: true,
+                avatarUrl: true,
+                avatarId: true,
+                bio: true,
+                phone: true
+            }
+        });
+        if (!user) {
+            return next(new Error('Authentication error'));
+        }
+        socket.user = { ...user, _id: user.id };
         next();
     } catch (error) {
         console.log('Lỗi tại authMiddleware, protectRoute: ', error);
         next(new Error('Unauthorized'));
     }
 };
+

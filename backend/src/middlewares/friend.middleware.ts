@@ -1,5 +1,4 @@
-import Conversation from '../models/conversation.model.ts';
-import Friend from '../models/friend.model.ts';
+import prisma from '../libs/prisma.ts';
 import { Request, Response, NextFunction } from 'express';
 
 const pair = (a: any, b: any) => (a < b ? [a, b] : [b, a]);
@@ -16,19 +15,34 @@ const friendMiddleware = {
 
             if (recipientId) {
                 const [userA, userB] = pair(me, recipientId);
-                const friendship = await Friend.findOne({ userA, userB });
+                const friendship = await prisma.friend.findUnique({
+                    where: {
+                        userAId_userBId: {
+                            userAId: userA,
+                            userBId: userB
+                        }
+                    }
+                });
 
                 if (!friendship) {
                     res.status(403).json({ message: 'Bạn chưa kết bạn với người này' });
                     return;
                 }
                 next();
+                return;
             }
 
             // chat nhóm
             const friendChecks = memberIds.map(async (id: string) => {
                 const [userA, userB] = pair(me, id);
-                const friend = await Friend.findOne({ userA, userB });
+                const friend = await prisma.friend.findUnique({
+                    where: {
+                        userAId_userBId: {
+                            userAId: userA,
+                            userBId: userB
+                        }
+                    }
+                });
                 return friend ? null : id;
             });
             const friendships = await Promise.all(friendChecks);
@@ -51,16 +65,19 @@ const friendMiddleware = {
                 res.status(400).json({ message: 'Chưa có conversationId' });
                 return;
             }
-            const conversation = await Conversation.findById(conversationId);
-            if (conversation?.type !== 'group') {
+            const conversation = await prisma.conversation.findUnique({
+                where: { id: conversationId },
+                include: {
+                    participants: true
+                }
+            });
+            if (!conversation || conversation.type !== 'group') {
                 res.status(400).json({ message: 'Conversation không phải nhóm' });
                 return;
             }
-            const memberIds = conversation.participants.map((p: any) => p.userId.toString());
-            const [userA, userB] = pair(me, conversationId);
-            const friend = await Friend.findOne({ userA, userB });
-            if (!friend) {
-                res.status(403).json({ message: 'Không thể tạo nhóm với người chưa kết bạn' });
+            const isMember = conversation.participants.some((p: any) => p.userId === me);
+            if (!isMember) {
+                res.status(403).json({ message: 'Bạn không phải thành viên nhóm này' });
                 return;
             }
             next();
@@ -72,3 +89,4 @@ const friendMiddleware = {
 };
 
 export default friendMiddleware;
+
