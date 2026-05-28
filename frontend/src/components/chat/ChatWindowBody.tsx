@@ -12,7 +12,7 @@ const ChatWindowBody = () => {
 
     const reverseMessages = [...messages].reverse();
     const hasMore = allMessages[activeConversationId!]?.hasMore ?? false;
-    const selectedConversation = conversations.find((conver) => conver._id === activeConversationId);
+    const selectedConversation = conversations.find((conver) => conver.id === activeConversationId);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -101,7 +101,7 @@ const ChatWindowBody = () => {
                 >
                     {reverseMessages.map((m, index) => (
                         <MessageItem
-                            key={m._id ?? index}
+                            key={m.id ?? index}
                             message={m}
                             index={index}
                             messages={reverseMessages}

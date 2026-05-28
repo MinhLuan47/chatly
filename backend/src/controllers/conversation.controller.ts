@@ -6,7 +6,7 @@ const conversationController = {
     createConversation: async (req: Request, res: Response) => {
         try {
             const { type, name, memberIds } = req.body;
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
 
             if (
                 !type ||
@@ -143,7 +143,7 @@ const conversationController = {
             }
 
             const participants = (conversation.participants || []).map((p: any) => ({
-                _id: p.userId,
+                id: p.userId,
                 displayName: p.user?.displayName,
                 avatarUrl: p.user?.avatarUrl ?? null,
                 joinedAt: p.joinedAt,
@@ -152,7 +152,7 @@ const conversationController = {
             const seenBy = (conversation.participants || [])
                 .filter((p: any) => p.lastSeenAt && conversation!.lastMessageAt && p.lastSeenAt >= conversation!.lastMessageAt)
                 .map((p: any) => ({
-                    _id: p.userId,
+                    id: p.userId,
                     displayName: p.user?.displayName,
                     avatarUrl: p.user?.avatarUrl ?? null,
                 }));
@@ -163,7 +163,6 @@ const conversationController = {
             });
 
             const formatted = {
-                _id: conversation.id,
                 id: conversation.id,
                 type: conversation.type,
                 name: conversation.name,
@@ -176,11 +175,11 @@ const conversationController = {
                 createdAt: conversation.createdAt,
                 updatedAt: conversation.updatedAt,
                 lastMessage: conversation.lastMessage ? {
-                    _id: conversation.lastMessage.id,
+                    id: conversation.lastMessage.id,
                     content: conversation.lastMessage.content,
                     createdAt: conversation.lastMessage.createdAt,
                     senderId: conversation.lastMessage.sender ? {
-                        _id: conversation.lastMessage.senderId,
+                        id: conversation.lastMessage.senderId,
                         displayName: conversation.lastMessage.sender.displayName,
                         avatarUrl: conversation.lastMessage.sender.avatarUrl,
                     } : null
@@ -204,7 +203,7 @@ const conversationController = {
     },
     getConversations: async (req: Request, res: Response) => {
         try {
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
             
             const userParticipants = await prisma.participant.findMany({
                 where: { userId },
@@ -234,7 +233,7 @@ const conversationController = {
 
             const formattedConversations = conversations.map((conver) => {
                 const participants = (conver.participants || []).map((p: any) => ({
-                    _id: p.userId,
+                    id: p.userId,
                     displayName: p.user?.displayName,
                     avatarUrl: p.user?.avatarUrl ?? null,
                     joinedAt: p.joinedAt,
@@ -243,7 +242,7 @@ const conversationController = {
                 const seenBy = (conver.participants || [])
                     .filter((p: any) => p.lastSeenAt && conver.lastMessageAt && p.lastSeenAt >= conver.lastMessageAt)
                     .map((p: any) => ({
-                        _id: p.userId,
+                        id: p.userId,
                         displayName: p.user?.displayName,
                         avatarUrl: p.user?.avatarUrl ?? null,
                     }));
@@ -254,7 +253,6 @@ const conversationController = {
                 });
 
                 return {
-                    _id: conver.id,
                     id: conver.id,
                     type: conver.type,
                     name: conver.name,
@@ -267,11 +265,11 @@ const conversationController = {
                     createdAt: conver.createdAt,
                     updatedAt: conver.updatedAt,
                     lastMessage: conver.lastMessage ? {
-                        _id: conver.lastMessage.id,
+                        id: conver.lastMessage.id,
                         content: conver.lastMessage.content,
                         createdAt: conver.lastMessage.createdAt,
                         senderId: conver.lastMessage.sender ? {
-                            _id: conver.lastMessage.senderId,
+                            id: conver.lastMessage.senderId,
                             displayName: conver.lastMessage.sender.displayName,
                             avatarUrl: conver.lastMessage.sender.avatarUrl,
                         } : null
@@ -314,7 +312,7 @@ const conversationController = {
             }
             messages = messages.reverse();
 
-            const formattedMessages = messages.map(m => ({ ...m, _id: m.id }));
+            const formattedMessages = messages;
 
             res.status(200).json({ success: true, messages: formattedMessages, nextCursor });
         } catch (error) {
@@ -337,7 +335,7 @@ const conversationController = {
     markAsSeen: async (req: Request, res: Response) => {
         try {
             const { conversationId } = req.params;
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
 
             const conversation = await prisma.conversation.findUnique({
                 where: { id: conversationId },
@@ -394,7 +392,7 @@ const conversationController = {
             });
 
             const participants = (updatedConversation!.participants || []).map((p: any) => ({
-                _id: p.userId,
+                id: p.userId,
                 displayName: p.user?.displayName,
                 avatarUrl: p.user?.avatarUrl ?? null,
                 joinedAt: p.joinedAt,
@@ -403,7 +401,7 @@ const conversationController = {
             const seenBy = (updatedConversation!.participants || [])
                 .filter((p: any) => p.lastSeenAt && updatedConversation!.lastMessageAt && p.lastSeenAt >= updatedConversation!.lastMessageAt)
                 .map((p: any) => ({
-                    _id: p.userId,
+                    id: p.userId,
                     displayName: p.user?.displayName,
                     avatarUrl: p.user?.avatarUrl ?? null,
                 }));
@@ -414,7 +412,6 @@ const conversationController = {
             });
 
             const formattedConversation = {
-                _id: updatedConversation!.id,
                 id: updatedConversation!.id,
                 type: updatedConversation!.type,
                 name: updatedConversation!.name,
@@ -427,11 +424,11 @@ const conversationController = {
                 createdAt: updatedConversation!.createdAt,
                 updatedAt: updatedConversation!.updatedAt,
                 lastMessage: updatedConversation!.lastMessage ? {
-                    _id: updatedConversation!.lastMessage.id,
+                    id: updatedConversation!.lastMessage.id,
                     content: updatedConversation!.lastMessage.content,
                     createdAt: updatedConversation!.lastMessage.createdAt,
                     senderId: updatedConversation!.lastMessage.sender ? {
-                        _id: updatedConversation!.lastMessage.senderId,
+                        id: updatedConversation!.lastMessage.senderId,
                         displayName: updatedConversation!.lastMessage.sender.displayName,
                         avatarUrl: updatedConversation!.lastMessage.sender.avatarUrl,
                     } : null
@@ -444,11 +441,11 @@ const conversationController = {
             io.to(conversationId).emit('readMessage', {
                 conversation: formattedConversation,
                 lastMessage: {
-                    _id: updatedConversation!.lastMessage?.id,
+                    id: updatedConversation!.lastMessage?.id,
                     content: updatedConversation!.lastMessage?.content,
                     createdAt: updatedConversation!.lastMessage?.createdAt,
                     senderId: {
-                        _id: updatedConversation!.lastMessage?.senderId,
+                        id: updatedConversation!.lastMessage?.senderId,
                     },
                 },
             });

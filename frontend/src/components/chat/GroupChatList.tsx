@@ -11,7 +11,7 @@ const GroupChatList = () => {
     return (
         <div className="flex-1 overflow-y-auto p-2 space-y-2">
             {directConversations.map((conver) => (
-                <Fragment key={conver._id}>
+                <Fragment key={conver.id}>
                     <GroupChatCard conver={conver} />
                 </Fragment>
             ))}

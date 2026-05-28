@@ -15,17 +15,18 @@ const FriendRequestDialog = ({ open, setOpen }: FriendRequestDialogProps) => {
     const { getAllFriendRequest } = useFriendStore();
 
     useEffect(() => {
-        const loadRequests = async () => {
-            try {
-                await getAllFriendRequest();
-            } catch (error) {
-                console.log('Lỗi khi load requests: ', error);
-            }
-        };
-
-        loadRequests();
+        if (open) {
+            const loadRequests = async () => {
+                try {
+                    await getAllFriendRequest();
+                } catch (error) {
+                    console.log('Lỗi khi load requests: ', error);
+                }
+            };
+            loadRequests();
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [open]);
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>

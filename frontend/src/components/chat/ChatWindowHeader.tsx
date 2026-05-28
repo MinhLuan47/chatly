@@ -13,7 +13,7 @@ const ChatWindowHeader = ({ chat }: { chat?: IConversation }) => {
     const { user } = useAuthStore();
     const { onlineUsers } = useSocketStore();
 
-    chat = chat || conversations.find((c) => c._id === activeConversationId);
+    chat = chat || conversations.find((c) => c.id === activeConversationId);
     let otherUser;
     if (!chat)
         return (
@@ -23,7 +23,7 @@ const ChatWindowHeader = ({ chat }: { chat?: IConversation }) => {
         );
 
     if (chat.type === 'direct') {
-        const otherUsers = chat.participants.filter((p) => p._id !== user?._id);
+        const otherUsers = chat.participants.filter((p) => p.id !== user?.id);
         otherUser = otherUsers.length > 0 ? otherUsers[0] : null;
 
         if (!otherUser || !user) return;
@@ -44,7 +44,7 @@ const ChatWindowHeader = ({ chat }: { chat?: IConversation }) => {
                                     avatarUrl={otherUser?.avatarUrl ?? undefined}
                                 />
                                 <StatusBadge
-                                    status={onlineUsers.includes(otherUser?._id ?? '') ? 'online' : 'offline'}
+                                    status={onlineUsers.includes(otherUser?.id ?? '') ? 'online' : 'offline'}
                                 />
                             </>
                         ) : (

@@ -12,11 +12,11 @@ const GroupChatCard: React.FC<{ conver: IConversation }> = ({ conver }) => {
 
     if (!user) return null;
 
-    const otherUser = conver.participants.find((p) => p._id !== user._id);
+    const otherUser = conver.participants.find((p) => p.id !== user.id);
     if (!otherUser) return null;
 
     const name = conver.group.name ?? '';
-    const unreadCount = conver.unreadCounts[user._id || ''];
+    const unreadCount = conver.unreadCounts[user.id || ''];
 
     const handleSelectConversation = async (converId: string) => {
         setActiveConversation(converId);
@@ -27,10 +27,10 @@ const GroupChatCard: React.FC<{ conver: IConversation }> = ({ conver }) => {
 
     return (
         <ChatCard
-            converId={conver._id}
+            converId={conver.id}
             name={name}
             timestamp={conver.lastMessage?.createdAt ? new Date(conver.lastMessage.createdAt) : undefined}
-            isActive={activeConversationId === conver._id}
+            isActive={activeConversationId === conver.id}
             onSelect={handleSelectConversation}
             unreadCount={unreadCount}
             leftSection={

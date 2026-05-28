@@ -5,7 +5,7 @@ const pair = (a: any, b: any) => (a < b ? [a, b] : [b, a]);
 const friendMiddleware = {
     checkFriendship: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const me = req.user._id?.toString();
+            const me = req.user.id;
             const recipientId = req.body.recipientId ?? null;
             const memberIds = req.body.memberIds ?? [];
             if (!recipientId && memberIds.length === 0) {
@@ -59,7 +59,7 @@ const friendMiddleware = {
     },
     checkGroupMembership: async (req: Request, res: Response, next: NextFunction) => {
         try {
-            const me = req.user._id?.toString();
+            const me = req.user.id;
             const conversationId = req.body.conversationId ?? null;
             if (!conversationId) {
                 res.status(400).json({ message: 'Chưa có conversationId' });

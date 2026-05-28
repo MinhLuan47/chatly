@@ -27,7 +27,7 @@ export const socketAuthMiddleware = async (socket: any, next: any) => {
         if (!user) {
             return next(new Error('Authentication error'));
         }
-        socket.user = { ...user, _id: user.id };
+        socket.user = user;
         next();
     } catch (error) {
         console.log('Lỗi tại authMiddleware, protectRoute: ', error);

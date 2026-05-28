@@ -1,10 +1,9 @@
 import type { IUserDetail } from '@/interfaces/user.interface';
 import { useFriendStore } from '@/stores/friend.store';
-import { Dialog, DialogContent, DialogTitle, DialogTrigger } from '@radix-ui/react-dialog';
+import { Dialog, DialogContent, DialogTitle, DialogTrigger, DialogHeader } from '../ui/dialog';
 import { UserPlus } from 'lucide-react';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { DialogHeader } from '../ui/dialog';
 import toast from 'react-hot-toast';
 import SearchForm from '../addFriendModal/SearchForm';
 import SendFriendRequest from '../addFriendModal/SendFriendRequest';
@@ -59,7 +58,7 @@ const AddFriendModal = () => {
     const handleSend = handleSubmit(async (data) => {
         if (!searchUser) return;
         try {
-            const message = await addFriend(searchUser._id, data.message.trim());
+            const message = await addFriend(searchUser._id, data.message?.trim() || '');
             toast.success(message);
 
             handleCancel();
@@ -87,23 +86,23 @@ const AddFriendModal = () => {
                     <DialogTitle>Kết bạn</DialogTitle>
                 </DialogHeader>
                 {isFound ? (
+                    <SendFriendRequest
+                        register={register}
+                        loading={loading}
+                        searchedUsername={searchedUsername}
+                        onSubmit={handleSend}
+                        onBack={() => setIsFound(null)}
+                    />
+                ) : (
                     <SearchForm
                         register={register}
                         onCancel={handleCancel}
-                        onSubmit={handleSend}
+                        onSubmit={handleSearch}
                         searchedUsername={searchedUsername}
                         usernameValue={usernameValue}
                         loading={loading}
                         isFound={isFound}
                         errors={errors}
-                    />
-                ) : (
-                    <SendFriendRequest
-                        register={register}
-                        loading={loading}
-                        searchedUsername={searchedUsername}
-                        onSubmit={handleSearch}
-                        onBack={() => setIsFound(null)}
                     />
                 )}
             </DialogContent>

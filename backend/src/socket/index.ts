@@ -22,21 +22,21 @@ io.on('connection', async (socket: any) => {
     console.log('a user connected:', socket.id);
     console.log(user.displayName, 'connected với socket id:', socket.id);
 
-    onlineUsers.set(user._id, socket.id);
+    onlineUsers.set(user.id, socket.id);
 
     io.emit('onlineUsers', Array.from(onlineUsers.keys()));
 
-    const conversationIds = await conversationController.getUserConversationIds(user._id);
+    const conversationIds = await conversationController.getUserConversationIds(user.id);
     conversationIds.forEach((conversationId) => socket.join(conversationId));
 
     socket.on('joinConversation', (conversationId: any) => {
         socket.join(conversationId);
     });
 
-    socket.join(user._id.toString());
+    socket.join(user.id.toString());
 
     socket.on('disconnect', () => {
-        onlineUsers.delete(user._id);
+        onlineUsers.delete(user.id);
         io.emit('onlineUsers', Array.from(onlineUsers.keys()));
         console.log('a user disconnected:', socket.id);
     });

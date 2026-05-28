@@ -6,7 +6,7 @@ import FriendRequestItem from './FriendRequestItem';
 const ReceivedRequests = () => {
     const { acceptRequest, declineRequest, loading, receivedList } = useFriendStore();
 
-    if (!receivedList || receivedList.length) {
+    if (!receivedList || receivedList.length === 0) {
         return <p className=" text-sm text-muted-foreground">Bạn chưa có lời mời kết bạn nào.</p>;
     }
 

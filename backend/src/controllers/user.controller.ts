@@ -30,8 +30,7 @@ const userController = {
                     avatarUrl: true,
                 }
             });
-            const mappedUser = user ? { ...user, _id: user.id } : null;
-            res.status(200).json({ success: true, user: mappedUser });
+            res.status(200).json({ success: true, user });
         } catch (error) {
             console.log('Lỗi tại userController, searchUserByUserName: ', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });
@@ -40,7 +39,7 @@ const userController = {
     uploadAvatar: async (req: Request, res: Response) => {
         try {
             const file = req.file;
-            const userId = req.user._id;
+            const userId = req.user.id;
 
             if (!file) {
                 res.status(400).json({ message: 'file is required' });
@@ -50,7 +49,7 @@ const userController = {
             const result = (await uploadImageFromBuffer(file.buffer, {})) as { secure_url: string; public_id: string };
 
             const updatedUser = await prisma.user.update({
-                where: { id: userId! },
+                where: { id: userId },
                 data: { avatarUrl: result.secure_url, avatarId: result.public_id },
                 select: { avatarUrl: true }
             });

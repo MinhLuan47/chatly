@@ -14,7 +14,7 @@ const GroupChatAvatar = ({ participants, type }: GroupChatAvatarProps) => {
         const member = participants[i];
         avatars.push(
             <UserAvatar
-                key={member._id}
+                key={member.id}
                 type={type}
                 name={member.displayName}
                 avatarUrl={member.avatarUrl ?? undefined}

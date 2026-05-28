@@ -7,7 +7,7 @@ const messageController = {
     sendDirectMessage: async (req: Request, res: Response) => {
         try {
             const { recipientId, content, conversationId } = req.body;
-            const senderId = req.user._id?.toString();
+            const senderId = req.user.id;
             let conversation;
 
             if (!content) {
@@ -67,7 +67,7 @@ const messageController = {
             await updateConversationAfterCreateMessage(conversation.id, message, senderId!);
             await emitNewMessage(io, conversation.id, message, senderId!);
 
-            res.status(200).json({ success: true, message: { ...message, _id: message.id } });
+            res.status(200).json({ success: true, message });
         } catch (error) {
             console.error('Lỗi khi gửi tin nhắn  =>', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });
@@ -76,7 +76,7 @@ const messageController = {
     sendGroupMessage: async (req: Request, res: Response) => {
         try {
             const { conversationId, content } = req.body;
-            const senderId = req.user._id?.toString();
+            const senderId = req.user.id;
 
             if (!content) {
                 res.status(400).json({ message: 'Thiếu nội dung' });
@@ -94,7 +94,7 @@ const messageController = {
             await updateConversationAfterCreateMessage(conversationId, message, senderId!);
             await emitNewMessage(io, conversationId, message, senderId!);
 
-            res.status(200).json({ success: true, message: { ...message, _id: message.id } });
+            res.status(200).json({ success: true, message });
         } catch (error) {
             console.error('Lỗi khi gửi tin nhắn nhóm  =>', error);
             res.status(500).json({ message: 'Lỗi hệ thống' });

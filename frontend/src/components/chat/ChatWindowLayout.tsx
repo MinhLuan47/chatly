@@ -9,14 +9,14 @@ import MessageInput from './MessageInput';
 
 const ChatWindowLayout = () => {
     const { activeConversationId, messageLoading, conversations, markAsSeen } = useChatStore();
-    const selectedConversation = conversations?.find((conver) => conver._id === activeConversationId) ?? null;
+    const selectedConversation = conversations?.find((conver) => conver.id === activeConversationId) ?? null;
 
     useEffect(() => {
         if (!selectedConversation) return;
 
         const markSeen = async () => {
             try {
-                await markAsSeen(selectedConversation._id);
+                await markAsSeen(selectedConversation.id);
             } catch (error) {
                 console.log('Lỗi tại chatStore, markAsSeen: ', error);
             }

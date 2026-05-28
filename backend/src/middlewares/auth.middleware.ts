@@ -31,7 +31,7 @@ export const protectRoute = async (req: Request, res: Response, next: NextFuncti
             return;
         }
 
-        req.user = { ...user, _id: user.id };
+        req.user = user;
         next();
     } catch (error) {
         console.log('Lỗi tại authMiddleware, protectRoute: ', error);

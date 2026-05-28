@@ -1,5 +1,5 @@
 export interface User {
-    _id: string | null | undefined;
+    id: string;
     username: string;
     email: string;
     displayName: string;
@@ -18,7 +18,7 @@ export interface IUserCreate {
 }
 
 export interface IUserDetail {
-    _id: string;
+    id: string;
     username: string;
     email: string;
     displayName: string;
@@ -30,22 +30,22 @@ export interface IUserDetail {
 }
 
 export interface Friend {
-    _id: string;
+    id: string;
     username: string;
     displayName: string;
     avatarUrl?: string;
 }
 
 export interface FriendRequest {
-    _id: string;
+    id: string;
     from?: {
-        _id: string;
+        id: string;
         username: string;
         displayName: string;
         avatarUrl?: string;
     };
     to?: {
-        _id: string;
+        id: string;
         username: string;
         displayName: string;
         avatarUrl?: string;

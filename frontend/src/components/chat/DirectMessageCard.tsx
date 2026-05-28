@@ -18,10 +18,10 @@ const DirectMessageCard: React.FC<DirectMessageCardProps> = ({ conver }) => {
     const { activeConversationId, setActiveConversation, messages, fetchMessages } = useChatStore();
 
     if (!user) return null;
-    const otherUser = conver.participants.find((p) => p._id !== user._id);
+    const otherUser = conver.participants.find((p) => p.id !== user.id);
     if (!otherUser) return null;
 
-    const unreadCount = conver.unreadCounts[user._id || ''];
+    const unreadCount = conver.unreadCounts[user.id || ''];
     const lastMessage = conver.lastMessage?.content ?? '';
 
     const handleSelectConversation = async (converId: string) => {
@@ -32,10 +32,10 @@ const DirectMessageCard: React.FC<DirectMessageCardProps> = ({ conver }) => {
     };
     return (
         <ChatCard
-            converId={conver._id}
+            converId={conver.id}
             name={otherUser.displayName ?? ''}
             timestamp={conver.lastMessage?.createdAt ? new Date(conver.lastMessage.createdAt) : undefined}
-            isActive={activeConversationId === conver._id}
+            isActive={activeConversationId === conver.id}
             onSelect={handleSelectConversation}
             unreadCount={unreadCount}
             leftSection={
@@ -45,7 +45,7 @@ const DirectMessageCard: React.FC<DirectMessageCardProps> = ({ conver }) => {
                         name={otherUser.displayName ?? ''}
                         avatarUrl={otherUser.avatarUrl ?? undefined}
                     />
-                    <StatusBadge status={onlineUsers.includes(otherUser._id) ? 'online' : 'offline'} />
+                    <StatusBadge status={onlineUsers.includes(otherUser.id) ? 'online' : 'offline'} />
                     {unreadCount > 0 && <UnreadCountBadge unreadCount={unreadCount} />}
                 </>
             }

@@ -52,11 +52,11 @@ export const emitNewMessage = async (io: any, conversationId: string, message: a
     });
 
     io.to(conversationId).emit('newMessage', {
-        message: { ...message, _id: message.id },
+        message,
         conversation: {
-            _id: conversationId,
+            id: conversationId,
             lastMessage: {
-                _id: message.id,
+                id: message.id,
                 senderId: senderId,
                 content: message.content,
                 createdAt: message.createdAt,

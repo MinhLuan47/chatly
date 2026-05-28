@@ -5,7 +5,7 @@ const friendController = {
     sendFriendRequest: async (req: Request, res: Response) => {
         try {
             const { to, message } = req.body;
-            const from = req.user._id?.toString();
+            const from = req.user.id;
 
             if (from === to) {
                 res.status(400).json({ message: 'Không thể gửi lời mời cho chính mình' });
@@ -62,7 +62,7 @@ const friendController = {
 
             res.status(201).json({
                 success: true,
-                request: { ...request, _id: request.id },
+                request,
                 message: 'Gửi lời mời kết bạn thành công'
             });
         } catch (error) {
@@ -73,7 +73,7 @@ const friendController = {
     acceptFriend: async (req: Request, res: Response) => {
         try {
             const { requestId } = req.params;
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
 
             const request = await prisma.friendRequest.findUnique({
                 where: { id: requestId }
@@ -109,11 +109,11 @@ const friendController = {
 
             res.status(200).json({
                 success: true,
-                friend: { ...friend, _id: friend.id },
-                from: fromUser ? { ...fromUser, _id: fromUser.id } : null,
+                friend,
+                from: fromUser || null,
                 message: 'Chấp nhận lời mời kết bạn thành công',
                 newFriend: {
-                    _id: fromUser?.id,
+                    id: fromUser?.id,
                     displayName: fromUser?.displayName,
                     avatarUrl: fromUser?.avatarUrl,
                 },
@@ -126,7 +126,7 @@ const friendController = {
     rejectFriend: async (req: Request, res: Response) => {
         try {
             const { requestId } = req.params;
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
             const request = await prisma.friendRequest.findUnique({
                 where: { id: requestId }
             });
@@ -152,7 +152,7 @@ const friendController = {
     },
     getAllFriends: async (req: Request, res: Response) => {
         try {
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
             const friendships = await prisma.friend.findMany({
                 where: {
                     OR: [
@@ -172,8 +172,8 @@ const friendController = {
             }
 
             const friends = friendships.map((friendship) => {
-                const uA = { ...friendship.userA, _id: friendship.userA.id };
-                const uB = { ...friendship.userB, _id: friendship.userB.id };
+                const uA = friendship.userA;
+                const uB = friendship.userB;
                 return friendship.userAId === userId ? uB : uA;
             });
 
@@ -185,7 +185,7 @@ const friendController = {
     },
     getFriendRequests: async (req: Request, res: Response) => {
         try {
-            const userId = req.user._id?.toString();
+            const userId = req.user.id;
             const [sentRequests, receivedRequests] = await Promise.all([
                 prisma.friendRequest.findMany({
                     where: { fromId: userId },
@@ -203,16 +203,16 @@ const friendController = {
 
             const sent = sentRequests.map(r => ({
                 ...r,
-                _id: r.id,
+                id: r.id,
                 from: r.fromId,
-                to: { ...r.to, _id: r.to.id }
+                to: r.to
             }));
 
             const received = receivedRequests.map(r => ({
                 ...r,
-                _id: r.id,
+                id: r.id,
                 to: r.toId,
-                from: { ...r.from, _id: r.from.id }
+                from: r.from
             }));
 
             res.status(200).json({

@@ -1,12 +1,12 @@
 export interface IParticipant {
-    _id: string;
+    id: string;
     displayName: string;
     avatarUrl?: string | null;
     joinedAt: string;
 }
 
 export interface ISeenUser {
-    _id: string;
+    id: string;
     displayName?: string;
     avatarUrl?: string | null;
 }
@@ -17,18 +17,18 @@ export interface IGroup {
 }
 
 export interface ILastMessage {
-    _id: string;
+    id: string;
     content: string;
     createdAt: string;
     sender: {
-        _id: string;
+        id: string;
         displayName: string;
         avatarUrl?: string | null;
     };
 }
 
 export interface IConversation {
-    _id: string;
+    id: string;
     type: 'direct' | 'group';
     group: IGroup;
     participants: IParticipant[];
@@ -45,7 +45,7 @@ export interface IConversationResponse {
 }
 
 export interface IMessage {
-    _id: string;
+    id: string;
     conversationId: string;
     senderId: string;
     content: string | null;

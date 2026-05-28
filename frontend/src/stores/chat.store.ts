@@ -78,7 +78,7 @@ export const useChatStore = create<ChatState>()(
 
                     const processed = newMessages.map((m) => ({
                         ...m,
-                        isOwn: m.senderId === user?._id,
+                        isOwn: m.senderId === user?.id,
                     }));
 
                     set((state) => {
@@ -115,7 +115,7 @@ export const useChatStore = create<ChatState>()(
 
                     set((state) => ({
                         conversations: state.conversations.map((c) =>
-                            c._id === activeConversationId ? { ...c, seenBy: [] } : c,
+                            c.id === activeConversationId ? { ...c, seenBy: [] } : c,
                         ),
                     }));
                 } catch (error) {
@@ -127,7 +127,7 @@ export const useChatStore = create<ChatState>()(
                     await chatService.sendGroupMessage(conversationId, content, imgUrl ?? '');
                     set((state) => ({
                         conversations: state.conversations.map((c) =>
-                            c._id === get().activeConversationId ? { ...c, seenBy: [] } : c,
+                            c.id === get().activeConversationId ? { ...c, seenBy: [] } : c,
                         ),
                     }));
                 } catch (error) {
@@ -139,7 +139,7 @@ export const useChatStore = create<ChatState>()(
                     const { user } = useAuthStore.getState();
                     const { fetchMessages } = get();
 
-                    message.isOwn = message.senderId === user?._id;
+                    message.isOwn = message.senderId === user?.id;
                     const converId = message.conversationId;
 
                     let prevItems = get().messages[converId]?.items ?? [];
@@ -150,7 +150,7 @@ export const useChatStore = create<ChatState>()(
                         prevItems = get().messages[converId]?.items ?? [];
                     }
                     set((state) => {
-                        if (!prevItems.some((m) => m._id === message._id)) {
+                        if (!prevItems.some((m) => m.id === message.id)) {
                             return state;
                         }
 
@@ -172,7 +172,7 @@ export const useChatStore = create<ChatState>()(
             },
             updateConversation: async (conversation: any) => {
                 set((state) => ({
-                    conversations: state.conversations.map((c: any) => (c._id === conversation._id ? conversation : c)),
+                    conversations: state.conversations.map((c: any) => (c.id === conversation.id ? conversation : c)),
                 }));
             },
             markAsSeen: async (conversationId) => {
@@ -182,22 +182,22 @@ export const useChatStore = create<ChatState>()(
 
                     if (!conversations || !user) return;
 
-                    const conver = conversations.find((c) => c._id === conversationId);
+                    const conver = conversations.find((c) => c.id === conversationId);
 
                     if (!conver) return;
 
-                    if ((conver.unreadCounts?.[user._id] ?? 0) === 0) return;
+                    if ((conver.unreadCounts?.[user.id] ?? 0) === 0) return;
 
                     await chatService.markAsSeen(activeConversationId || conversationId);
 
                     set((state) => ({
                         conversations: state.conversations.map((c) =>
-                            c._id === conversationId && c.lastMessage
+                            c.id === conversationId && c.lastMessage
                                 ? {
                                       ...c,
                                       unreadCounts: {
                                           ...c.unreadCounts,
-                                          [user._id]: 0,
+                                          [user.id]: 0,
                                       },
                                   }
                                 : c,
@@ -209,10 +209,10 @@ export const useChatStore = create<ChatState>()(
             },
             addConvo: (covo) => {
                 set((state) => {
-                    const exists = state.conversations.some((c) => c._id.toString() === covo._id.toString());
+                    const exists = state.conversations.some((c) => c.id.toString() === covo.id.toString());
                     return {
                         conversations: exists ? state.conversations : [covo, ...state.conversations],
-                        activeConversationId: covo._id,
+                        activeConversationId: covo.id,
                     };
                 });
             },
@@ -222,7 +222,7 @@ export const useChatStore = create<ChatState>()(
                     const conversation = await chatService.createConversation(type, name, memberIds);
                     get().addConvo(conversation);
 
-                    useSocketStore.getState().socket?.emit('joinConversation', conversation._id);
+                    useSocketStore.getState().socket?.emit('joinConversation', conversation.id);
                 } catch (error) {
                     console.log('Lỗi xảy ra khi gọi  createConversation: ', error);
                 } finally {

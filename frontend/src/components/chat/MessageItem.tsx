@@ -20,7 +20,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, index, messages, sel
         (prev && prev.senderId !== message.senderId) ||
         new Date(message.createdAt).getTime() - new Date(prev?.createdAt || 0).getTime() > 5 * 60 * 1000; // 5 minutes
 
-    const participant = selectedConver?.participants.find((p) => p._id.toString() === message.senderId.toString());
+    const participant = selectedConver?.participants.find((p) => p.id.toString() === message.senderId.toString());
     return (
         <div className={cn('flex gap-2 mt-1 message-bounce', message.isOwn ? 'justify-end' : 'justify-start')}>
             {/* Avatar */}
@@ -52,7 +52,7 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, index, messages, sel
                         {formatMessageTime(new Date(message.createdAt))}
                     </span>
                 )}
-                {message.isOwn && message._id === selectedConver?.lastMessage?._id && (
+                {message.isOwn && message.id === selectedConver?.lastMessage?.id && (
                     <Badge
                         variant="outline"
                         className={cn(

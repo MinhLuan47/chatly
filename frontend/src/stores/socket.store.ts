@@ -39,9 +39,9 @@ const useSocketStore = create<{
             console.log('newMessage', message, conversation, unreadCounts);
             useChatStore.getState().addMessage(message);
             const lastMessage = {
-                _id: conversation.lastMessage._id,
+                id: conversation.lastMessage.id,
                 senderId: {
-                    _id: conversation.lastMessage.senderId,
+                    id: conversation.lastMessage.senderId,
                     displayName: '',
                     avatarUrl: null,
                 },
@@ -56,14 +56,14 @@ const useSocketStore = create<{
             };
 
             if (useChatStore.getState().activeConversationId === message.conversationId) {
-                useChatStore.getState().markAsSeen(updateConversation._id);
+                useChatStore.getState().markAsSeen(updateConversation.id);
             }
             useChatStore.getState().updateConversation(updateConversation);
         });
 
         socket.on('readMessage', ({ conversation, lastMessage }) => {
             const updated = {
-                _id: conversation._id,
+                id: conversation.id,
                 lastMessage,
                 lastMessageAt: conversation.lastMessageAt,
                 unreadCounts: conversation.unreadCounts,
@@ -74,7 +74,7 @@ const useSocketStore = create<{
 
         socket.on('newGroup', (conversation: IConversation) => {
             useChatStore.getState().addConvo(conversation);
-            socket.emit('joinConversation', conversation._id); // join conversation
+            socket.emit('joinConversation', conversation.id); // join conversation
         });
     },
     disconnectSocket: () => {

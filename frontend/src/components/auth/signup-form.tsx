@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import useAuthStore from '@/stores/auth.store';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router';
+import { Link } from 'react-router-dom';
 import z from 'zod';
 
 const formSignUpSchema = z.object({
