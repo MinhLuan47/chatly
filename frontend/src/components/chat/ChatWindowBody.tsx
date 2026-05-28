@@ -79,7 +79,7 @@ const ChatWindowBody = () => {
         );
 
     return (
-        <div className=" flex flex-col h-full p-4 bg-primary overflow-hidden ">
+        <div className=" flex flex-col h-full p-4 bg-primary-foreground overflow-hidden ">
             <div
                 id="scrollableDiv"
                 ref={containerRef}

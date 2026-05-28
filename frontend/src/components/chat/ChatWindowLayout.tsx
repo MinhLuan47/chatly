@@ -35,7 +35,7 @@ const ChatWindowLayout = () => {
             <ChatWindowHeader chat={selectedConversation} />
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto bg-primary-foreground ">
+            <div className="flex-1 overflow-y-auto  ">
                 <ChatWindowBody />
             </div>
 

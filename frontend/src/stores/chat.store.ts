@@ -142,14 +142,18 @@ export const useChatStore = create<ChatState>()(
                     message.isOwn = message.senderId === user?.id;
                     const converId = message.conversationId;
 
-                    let prevItems = get().messages[converId]?.items ?? [];
-
-                    if (prevItems.length === 0) {
+                    if (!get().messages[converId]) {
                         await fetchMessages(message.conversationId);
-                        prevItems = get().messages[converId]?.items ?? [];
                     }
+
                     set((state) => {
-                        if (prevItems.some((m) => m.id === message.id)) {
+                        const currentConversationMessages = state.messages[converId] || {
+                            items: [],
+                            hasMore: false,
+                            nextCuror: undefined
+                        };
+
+                        if (currentConversationMessages.items.some((m) => m.id === message.id)) {
                             return state;
                         }
 
@@ -157,9 +161,8 @@ export const useChatStore = create<ChatState>()(
                             messages: {
                                 ...state.messages,
                                 [converId]: {
-                                    items: [...prevItems, message],
-                                    hasMore: state.messages[converId]?.hasMore ?? false,
-                                    nextCuror: state.messages[converId]?.nextCuror ?? undefined,
+                                    ...currentConversationMessages,
+                                    items: [...currentConversationMessages.items, message],
                                 },
                             },
                         };
