@@ -7,17 +7,18 @@ import FriendListModal from '../createNewChat/FriendListModal';
 const CreateNewChat = () => {
     const { getFriends } = useFriendStore();
 
-    const handleGetFriends = async () => {
-        await getFriends();
+    const handleOpenChange = async (open: boolean) => {
+        if (open) {
+            await getFriends();
+        }
     };
 
     return (
         <div className="flex gap-2">
             <Card
                 className="flex-1 p-3 glass hover:shadow-soft transition-smooth cursor-pointer group/card"
-                onClick={handleGetFriends}
             >
-                <Dialog>
+                <Dialog onOpenChange={handleOpenChange}>
                     <DialogTrigger asChild>
                         <div className=" flex items-center gap-4">
                             <div className="size-8 bg-gradient-chat rounded-full flex items-center justify-center group-hover/card:scale-110 transition-bounce">

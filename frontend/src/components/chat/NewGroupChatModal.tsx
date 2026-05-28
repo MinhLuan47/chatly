@@ -17,9 +17,6 @@ const NewGroupChatModal = () => {
     const { loading, createConversation } = useChatStore();
     const { friends, getFriends } = useFriendStore();
     const [invitedUsers, setInvitedUsers] = useState<Friend[]>([]);
-    const handleGetFriends = async () => {
-        await getFriends();
-    };
 
     const filterFriends = friends.filter(
         (friend) =>
@@ -56,12 +53,16 @@ const NewGroupChatModal = () => {
     const handleRemoveFriend = (friend: Friend) => {
         setInvitedUsers(invitedUsers.filter((u) => u.id !== friend.id));
     };
+    const handleOpenChange = async (open: boolean) => {
+        if (open) {
+            await getFriends();
+        }
+    };
     return (
-        <Dialog>
+        <Dialog onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button
                     variant="ghost"
-                    onClick={handleGetFriends}
                     className="flex justify-center items-center size-5 rounded-full hover:bg-sidebar-accent z-10 transition cursor-pointer"
                 >
                     <Users className="size-4" />

@@ -37,6 +37,7 @@ export const friendService = {
     getFriends: async () => {
         try {
             const response = await api.get('/friends');
+            console.log(response.data.friends);
             return response.data.friends;
         } catch (error) {
             console.log('Lỗi khi gửi getFriends: ', error);
