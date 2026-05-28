@@ -8,7 +8,6 @@ export const authService = {
     },
     signIn: async (username: string, password: string) => {
         const response = await api.post('/auth/signin', { username, password });
-        console.log(response.data);
         return response.data;
     },
     signOut: async () => {
