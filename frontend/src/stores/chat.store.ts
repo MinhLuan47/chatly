@@ -146,11 +146,10 @@ export const useChatStore = create<ChatState>()(
 
                     if (prevItems.length === 0) {
                         await fetchMessages(message.conversationId);
-
                         prevItems = get().messages[converId]?.items ?? [];
                     }
                     set((state) => {
-                        if (!prevItems.some((m) => m.id === message.id)) {
+                        if (prevItems.some((m) => m.id === message.id)) {
                             return state;
                         }
 
@@ -159,13 +158,12 @@ export const useChatStore = create<ChatState>()(
                                 ...state.messages,
                                 [converId]: {
                                     items: [...prevItems, message],
-                                    hasMore: state.messages[converId].hasMore,
-                                    nextCuror: state.messages[converId].nextCuror ?? undefined,
+                                    hasMore: state.messages[converId]?.hasMore ?? false,
+                                    nextCuror: state.messages[converId]?.nextCuror ?? undefined,
                                 },
                             },
                         };
                     });
-                    await fetchMessages(converId);
                 } catch (error) {
                     console.log('Lỗi tại chatStore, addMessage: ', error);
                 }
