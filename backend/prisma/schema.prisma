@@ -1,0 +1,130 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id             String         @id @default(uuid())
+  username       String         @unique
+  email          String         @unique
+  hashPassword   String
+  displayName    String
+  avatarUrl      String?
+  avatarId       String?
+  bio            String?        @db.VarChar(500)
+  phone          String?        @unique
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  // Relationships
+  sessions       Session[]
+  sentRequests   FriendRequest[] @relation("SentRequests")
+  receivedRequests FriendRequest[] @relation("ReceivedRequests")
+  friendsA       Friend[]        @relation("FriendsA")
+  friendsB       Friend[]        @relation("FriendsB")
+  participants   Participant[]
+  messages       Message[]
+  createdGroups  Conversation[]  @relation("GroupCreator")
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model FriendRequest {
+  id        String   @id @default(uuid())
+  fromId    String
+  from      User     @relation("SentRequests", fields: [fromId], references: [id], onDelete: Cascade)
+  toId      String
+  to        User     @relation("ReceivedRequests", fields: [toId], references: [id], onDelete: Cascade)
+  message   String?  @db.VarChar(300)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([fromId, toId])
+  @@index([fromId])
+  @@index([toId])
+  @@map("friend_requests")
+}
+
+model Friend {
+  id        String   @id @default(uuid())
+  userAId   String
+  userA     User     @relation("FriendsA", fields: [userAId], references: [id], onDelete: Cascade)
+  userBId   String
+  userB     User     @relation("FriendsB", fields: [userBId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userAId, userBId])
+  @@index([userAId])
+  @@index([userBId])
+  @@map("friends")
+}
+
+model Conversation {
+  id              String        @id @default(uuid())
+  type            String        // "direct" or "group"
+  name            String?       // Group name
+  createdById     String?
+  createdBy       User?         @relation("GroupCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  groupAvatarUrl  String?       @default("")
+  lastMessageId   String?       @unique
+  lastMessage     Message?      @relation("LastMessageRelation", fields: [lastMessageId], references: [id], onDelete: SetNull)
+  lastMessageAt   DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relationships
+  participants    Participant[]
+  messages        Message[]     @relation("ConversationMessages")
+
+  @@index([lastMessageAt(sort: Desc)])
+  @@map("conversations")
+}
+
+model Participant {
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt       DateTime     @default(now())
+  unreadCount    Int          @default(0)
+  lastSeenAt     DateTime?
+
+  @@id([conversationId, userId])
+  @@map("participants")
+}
+
+model Message {
+  id             String       @id @default(uuid())
+  conversationId String
+  conversation   Conversation @relation("ConversationMessages", fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+  content        String?
+  imageUrl       String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  // Reverse relation for lastMessage
+  lastInConversation Conversation? @relation("LastMessageRelation")
+
+  @@index([conversationId, createdAt(sort: Desc)])
+  @@map("messages")
+}
