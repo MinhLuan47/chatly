@@ -157,14 +157,14 @@ async function runAllTests() {
         if (reqABRes.status !== 201 || !reqABData.success) {
             throw new Error(`Failed to send friend request: ${JSON.stringify(reqABData)}`);
         }
-        const requestIdAB = reqABData.request._id;
+        const requestIdAB = reqABData.request.id;
         console.log('✅ Friend request sent from A to B. ID:', requestIdAB);
 
         const getRequestsBRes = await fetch(`${API_URL}/friends/requests`, {
             headers: { 'Authorization': `Bearer ${tokenB}` }
         });
         const requestsBData = await getRequestsBRes.json();
-        if (requestsBData.received.length === 0 || requestsBData.received[0]._id !== requestIdAB) {
+        if (requestsBData.received.length === 0 || requestsBData.received[0].id !== requestIdAB) {
             throw new Error('Failed to get received friend requests for B');
         }
         console.log('✅ Received requests correctly retrieved by User B.');
@@ -190,7 +190,7 @@ async function runAllTests() {
             body: JSON.stringify({ to: userIdC, message: 'Hello C' })
         });
         const reqACData = await reqACRes.json();
-        const requestIdAC = reqACData.request._id;
+        const requestIdAC = reqACData.request.id;
 
         console.log('User C rejecting friend request...');
         const rejectRes = await fetch(`${API_URL}/friends/requests/${requestIdAC}/reject`, {
@@ -206,7 +206,7 @@ async function runAllTests() {
             headers: { 'Authorization': `Bearer ${tokenA}` }
         });
         const friendsAData = await getFriendsARes.json();
-        if (friendsAData.friends.length !== 1 || friendsAData.friends[0]._id !== userIdB) {
+        if (friendsAData.friends.length !== 1 || friendsAData.friends[0].id !== userIdB) {
             throw new Error('User A friend list incorrect');
         }
         console.log('✅ Friends lists verified for User A.');
@@ -254,7 +254,7 @@ async function runAllTests() {
         if (createConvRes.status !== 201 || !convData.success) {
             throw new Error(`Failed to create conversation: ${JSON.stringify(convData)}`);
         }
-        const conversationId = convData.conversation._id;
+        const conversationId = convData.conversation.id;
         console.log('✅ Direct conversation created. ID:', conversationId);
 
         socketA.emit('joinConversation', conversationId);
@@ -292,7 +292,7 @@ async function runAllTests() {
             headers: { 'Authorization': `Bearer ${tokenB}` }
         });
         const convsBData = await getConvsBRes.json();
-        const conv = convsBData.conversations.find((c: any) => c._id === conversationId);
+        const conv = convsBData.conversations.find((c: any) => c.id === conversationId);
         if (!conv || conv.unreadCounts[userIdB] !== 1) {
             throw new Error(`Unread counts incorrect for User B: ${JSON.stringify(conv)}`);
         }
@@ -314,7 +314,7 @@ async function runAllTests() {
         }
         
         await delay(1000);
-        if (!caughtSeenEvent || caughtSeenEvent.conversation._id !== conversationId) {
+        if (!caughtSeenEvent || caughtSeenEvent.conversation.id !== conversationId) {
             throw new Error('Socket.io client did not receive readMessage (seen) event');
         }
         console.log('✅ Mark as seen works! Socket.io readMessage event captured successfully.');
@@ -341,7 +341,7 @@ async function runAllTests() {
         if (createGroupRes.status !== 201 || !groupData.success) {
             throw new Error(`Failed to create group: ${JSON.stringify(groupData)}`);
         }
-        const groupId = groupData.conversation._id;
+        const groupId = groupData.conversation.id;
         console.log('✅ Group conversation created. ID:', groupId);
 
         console.log('User A sending a group message...');

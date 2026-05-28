@@ -14,7 +14,7 @@ const InviteSuggestionList = ({ filterdFriends, onSelect }: Props) => {
         <div className=" border rounded-lg mt-2 max-h-[180px] overflow-y-auto divide-y">
             {filterdFriends.map((friend) => (
                 <div
-                    key={friend._id}
+                    key={friend.id}
                     className="flex items-center gap-3 p-2 hover:bg-muted transition cursor-pointer"
                     onClick={() => onSelect(friend)}
                 >

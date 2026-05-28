@@ -30,8 +30,8 @@ const FriendListModal = () => {
                 <div className="space-y-2 max-h-60 overflow-y-auto">
                     {friends.map((friend) => (
                         <Card
-                            key={friend._id}
-                            onClick={() => handleAddConversation(friend._id)}
+                            key={friend.id}
+                            onClick={() => handleAddConversation(friend.id)}
                             className=" glass p-3 cursor-pointer transition-smooth hover:shadow-soft hover:bg-muted/30 group/friendCard"
                         >
                             <div className="flex items-center gap-3">

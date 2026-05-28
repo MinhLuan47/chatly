@@ -32,7 +32,7 @@ const ReceivedRequests = () => {
         <div className="space-y-3 mt-4">
             {receivedList.map((friendRequest) => (
                 <FriendRequestItem
-                    key={friendRequest._id}
+                    key={friendRequest.id}
                     requestInfo={friendRequest}
                     type="received"
                     actions={
@@ -40,7 +40,7 @@ const ReceivedRequests = () => {
                             <Button
                                 size="sm"
                                 variant="primary"
-                                onClick={() => handleAccept(friendRequest._id)}
+                                onClick={() => handleAccept(friendRequest.id)}
                                 disabled={loading}
                             >
                                 Chấp nhận
@@ -49,7 +49,7 @@ const ReceivedRequests = () => {
                             <Button
                                 size="sm"
                                 variant="destructiveOutline"
-                                onClick={() => handleDecline(friendRequest._id)}
+                                onClick={() => handleDecline(friendRequest.id)}
                                 disabled={loading}
                             >
                                 Từ chối

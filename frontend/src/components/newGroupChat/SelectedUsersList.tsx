@@ -16,7 +16,7 @@ const SelectedUsersList = ({ invitedUsers, onRemove }: Props) => {
         <div className="flex flex-wrap gap-2 pt-2 ">
             {invitedUsers.map((user) => (
                 <div
-                    key={user._id}
+                    key={user.id}
                     className="flex items-center gap-1 px-3 py-1 bg-muted rounded-full  "
                     onClick={() => onRemove(user)}
                 >

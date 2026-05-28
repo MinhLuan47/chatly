@@ -24,7 +24,7 @@ const NewGroupChatModal = () => {
     const filterFriends = friends.filter(
         (friend) =>
             friend.displayName.toLowerCase().includes(search.toLowerCase()) &&
-            !invitedUsers.some((u) => u._id === friend._id),
+            !invitedUsers.some((u) => u.id === friend.id),
     );
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +38,7 @@ const NewGroupChatModal = () => {
             await createConversation(
                 'group',
                 groupName,
-                invitedUsers.map((u) => u._id),
+                invitedUsers.map((u) => u.id),
             );
 
             setSearch('');
@@ -54,7 +54,7 @@ const NewGroupChatModal = () => {
     };
 
     const handleRemoveFriend = (friend: Friend) => {
-        setInvitedUsers(invitedUsers.filter((u) => u._id !== friend._id));
+        setInvitedUsers(invitedUsers.filter((u) => u.id !== friend.id));
     };
     return (
         <Dialog>

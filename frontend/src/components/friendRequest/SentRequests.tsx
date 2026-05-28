@@ -11,7 +11,7 @@ const SentRequests = () => {
         <div className="space-y-3">
             {sentList.map((friendRequest) => (
                 <FriendRequestItem
-                    key={friendRequest._id}
+                    key={friendRequest.id}
                     requestInfo={friendRequest}
                     type="sent"
                     actions={<p className="text-muted-foreground text-sm">Đang chờ trả lời...</p>}

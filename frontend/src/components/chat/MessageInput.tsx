@@ -24,10 +24,10 @@ const MessageInput = ({ selectedConver }: { selectedConver: IConversation }) => 
         try {
             if (selectedConver.type === 'direct') {
                 const paticipants = selectedConver.participants;
-                const otherUser = paticipants.filter((p) => p._id !== user._id);
-                await sendDirectMessage(otherUser[0]._id, currentValue);
+                const otherUser = paticipants.filter((p) => p.id !== user.id);
+                await sendDirectMessage(otherUser[0].id, currentValue);
             } else {
-                await sendGroupMessage(selectedConver._id, currentValue);
+                await sendGroupMessage(selectedConver.id, currentValue);
             }
         } catch (error) {
             console.log(error);
