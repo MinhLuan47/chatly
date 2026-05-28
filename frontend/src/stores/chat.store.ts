@@ -26,7 +26,7 @@ interface ChatState {
     sendDirectMessage: (recipientId: string, content: string, imgUrl?: string) => Promise<void>;
     sendGroupMessage: (conversationId: string, content: string, imgUrl?: string) => Promise<void>;
     addMessage: (message: IMessage) => Promise<void>;
-    updateConversation: (conversation: unknown) => Promise<void>;
+    updateConversation: (conversation: any) => Promise<void>;
     markAsSeen: (conversationId: string) => Promise<void>;
     addConvo: (covo: IConversation) => void;
     createConversation: (type: 'direct' | 'group', name: string, memberIds: string[]) => Promise<void>;
@@ -170,9 +170,9 @@ export const useChatStore = create<ChatState>()(
                     console.log('Lỗi tại chatStore, addMessage: ', error);
                 }
             },
-            updateConversation: async (conversation) => {
+            updateConversation: async (conversation: any) => {
                 set((state) => ({
-                    conversations: state.conversations.map((c) => (c._id === conversation._id ? conversation : c)),
+                    conversations: state.conversations.map((c: any) => (c._id === conversation._id ? conversation : c)),
                 }));
             },
             markAsSeen: async (conversationId) => {

@@ -8,7 +8,7 @@ interface UserState {
     updateAvatarUrl: (formData: FormData) => Promise<void>;
 }
 
-export const useUserStore = create<UserState>()((set) => ({
+export const useUserStore = create<UserState>()(() => ({
     updateAvatarUrl: async (formData) => {
         try {
             const { user, setUser } = useAuthStore.getState();

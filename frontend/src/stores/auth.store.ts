@@ -85,7 +85,7 @@ const useAuthStore = create<AuthStore>()(
                     if (!user) {
                         await fetchUser();
                     }
-                } catch (error) {
+                } catch (error: any) {
                     console.log(error?.response?.data?.message);
                     toast.error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
                     get().cleanState();

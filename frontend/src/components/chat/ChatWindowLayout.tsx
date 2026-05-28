@@ -8,7 +8,7 @@ import ChatWindowSkeleton from './ChatWindowSkeleton';
 import MessageInput from './MessageInput';
 
 const ChatWindowLayout = () => {
-    const { activeConversationId, messageLoading, messages, conversations, markAsSeen } = useChatStore();
+    const { activeConversationId, messageLoading, conversations, markAsSeen } = useChatStore();
     const selectedConversation = conversations?.find((conver) => conver._id === activeConversationId) ?? null;
 
     useEffect(() => {

@@ -23,8 +23,8 @@ const SearchForm = ({
     errors,
     loading,
     usernameValue,
-    isFound,
-    searchedUsername,
+    isFound: _isFound,
+    searchedUsername: _searchedUsername,
     onSubmit,
     onCancel,
 }: SearchFormProps) => {
