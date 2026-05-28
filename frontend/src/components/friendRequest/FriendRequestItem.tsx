@@ -11,7 +11,7 @@ interface Props {
 const FriendRequestItem = ({ requestInfo, actions, type }: Props) => {
     if (!requestInfo) return;
 
-    const info = type === 'sent' ? requestInfo.from : requestInfo.to;
+    const info = type === 'sent' ? requestInfo.to : requestInfo.from;
 
     if (!info) return;
 
