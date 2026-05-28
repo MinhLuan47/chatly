@@ -30,14 +30,14 @@ const SearchForm = ({
 }: SearchFormProps) => {
     return (
         <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-2">
-                <label htmlFor="username" className="text-sm font-semibold">
+            <div className="space-y-4">
+                <label htmlFor="username" className="text-sm font-semibold ">
                     Tìm bằng username
                 </label>
                 <Input
                     id="username"
                     placeholder="Gõ tên username vào đây..."
-                    className="glass border-border/50 focus:border-primary/50 transition-smooth"
+                    className="glass mt-4 border-border/50 focus:border-primary/50 transition-smooth"
                     {...register('username', {
                         required: 'Username không được bỏ trống',
                     })}
