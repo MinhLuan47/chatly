@@ -56,8 +56,7 @@ const useSocketStore = create<{
             };
 
             if (useChatStore.getState().activeConversationId === message.conversationId) {
-                //todo
-                useChatStore.getState().markAsSeen(updateConversation);
+                useChatStore.getState().markAsSeen(updateConversation._id);
             }
             useChatStore.getState().updateConversation(updateConversation);
         });
