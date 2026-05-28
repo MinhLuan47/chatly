@@ -1,6 +1,7 @@
 import type { Friend, FriendRequest, IUserDetail } from '@/interfaces/user.interface';
 import { friendService } from '@/services/friend.service';
 import { create } from 'zustand';
+import { useChatStore } from './chat.store';
 
 interface FriendState {
     loading: boolean;
@@ -67,6 +68,11 @@ export const useFriendStore = create<FriendState>()((set) => ({
                 receivedList: state.receivedList.filter((item) => item.id !== requestId),
                 friends: data?.newFriend ? [...state.friends, data.newFriend] : state.friends,
             }));
+
+            // Add the new conversation to the chat store immediately
+            if (data?.conversation) {
+                useChatStore.getState().addConvo(data.conversation);
+            }
         } catch (error) {
             console.log('Lỗi xảy ra khi acceptRequest  ', error);
         } finally {

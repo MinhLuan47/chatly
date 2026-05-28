@@ -2,6 +2,7 @@ import { useFriendStore } from '@/stores/friend.store';
 import { Card } from '../ui/card';
 import { Dialog, DialogTrigger } from '../ui/dialog';
 import { MessageCircle } from 'lucide-react';
+import FriendListModal from '../createNewChat/FriendListModal';
 
 const CreateNewChat = () => {
     const { getFriends } = useFriendStore();
@@ -17,7 +18,7 @@ const CreateNewChat = () => {
                 onClick={handleGetFriends}
             >
                 <Dialog>
-                    <DialogTrigger>
+                    <DialogTrigger asChild>
                         <div className=" flex items-center gap-4">
                             <div className="size-8 bg-gradient-chat rounded-full flex items-center justify-center group-hover/card:scale-110 transition-bounce">
                                 <MessageCircle className="text-white size-4" />
@@ -25,6 +26,7 @@ const CreateNewChat = () => {
                             <span className="capitalize text-sm font-medium">Gửi tin nhắn mới</span>
                         </div>
                     </DialogTrigger>
+                    <FriendListModal />
                 </Dialog>
             </Card>
         </div>

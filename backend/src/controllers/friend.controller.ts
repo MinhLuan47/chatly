@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import prisma from '../libs/prisma.ts';
+import { io } from '../socket/index.ts';
 
 const friendController = {
     sendFriendRequest: async (req: Request, res: Response) => {
@@ -107,6 +108,121 @@ const friendController = {
                 select: { id: true, displayName: true, avatarUrl: true }
             });
 
+            // Tự động tạo cuộc hội thoại trực tiếp giữa hai người nếu chưa tồn tại
+            let conversation = await prisma.conversation.findFirst({
+                where: {
+                    type: 'direct',
+                    AND: [
+                        { participants: { some: { userId: sortedA } } },
+                        { participants: { some: { userId: sortedB } } }
+                    ]
+                },
+                include: {
+                    participants: {
+                        include: {
+                            user: { select: { id: true, displayName: true, avatarUrl: true } }
+                        }
+                    },
+                    lastMessage: {
+                        include: {
+                            sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                        }
+                    }
+                }
+            });
+
+            if (!conversation) {
+                conversation = await prisma.conversation.create({
+                    data: {
+                        type: 'direct',
+                        lastMessageAt: new Date(),
+                    },
+                    include: {
+                        participants: {
+                            include: {
+                                user: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        },
+                        lastMessage: {
+                            include: {
+                                sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        }
+                    }
+                });
+
+                await prisma.participant.createMany({
+                    data: [
+                        { conversationId: conversation.id, userId: sortedA },
+                        { conversationId: conversation.id, userId: sortedB }
+                    ]
+                });
+
+                // Re-fetch populated conversation
+                conversation = await prisma.conversation.findUnique({
+                    where: { id: conversation.id },
+                    include: {
+                        participants: {
+                            include: {
+                                user: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        },
+                        lastMessage: {
+                            include: {
+                                sender: { select: { id: true, displayName: true, avatarUrl: true } }
+                            }
+                        }
+                    }
+                }) || conversation;
+            }
+
+            const participants = (conversation.participants || []).map((p: any) => ({
+                id: p.userId,
+                displayName: p.user?.displayName,
+                avatarUrl: p.user?.avatarUrl ?? null,
+                joinedAt: p.joinedAt,
+            }));
+
+            const seenBy = (conversation.participants || [])
+                .filter((p: any) => p.lastSeenAt && conversation!.lastMessageAt && p.lastSeenAt >= conversation!.lastMessageAt)
+                .map((p: any) => ({
+                    id: p.userId,
+                    displayName: p.user?.displayName,
+                    avatarUrl: p.user?.avatarUrl ?? null,
+                }));
+
+            const unreadCounts: Record<string, number> = {};
+            (conversation.participants || []).forEach((p: any) => {
+                unreadCounts[p.userId] = p.unreadCount;
+            });
+
+            const formattedConversation = {
+                id: conversation.id,
+                type: conversation.type,
+                name: conversation.name,
+                group: null,
+                lastMessageAt: conversation.lastMessageAt,
+                createdAt: conversation.createdAt,
+                updatedAt: conversation.updatedAt,
+                lastMessage: conversation.lastMessage ? {
+                    id: conversation.lastMessage.id,
+                    content: conversation.lastMessage.content,
+                    createdAt: conversation.lastMessage.createdAt,
+                    senderId: conversation.lastMessage.sender ? {
+                        id: conversation.lastMessage.senderId,
+                        displayName: conversation.lastMessage.sender.displayName,
+                        avatarUrl: conversation.lastMessage.sender.avatarUrl,
+                    } : null
+                } : null,
+                seenBy,
+                unreadCounts,
+                participants,
+            };
+
+            // Phát sự kiện socket để cập nhật giao diện của người gửi kết bạn
+            const otherUserId = request.fromId === userId ? request.toId : request.fromId;
+            io.to(otherUserId).emit('newGroup', formattedConversation);
+
             res.status(200).json({
                 success: true,
                 friend,
@@ -117,6 +233,7 @@ const friendController = {
                     displayName: fromUser?.displayName,
                     avatarUrl: fromUser?.avatarUrl,
                 },
+                conversation: formattedConversation,
             });
         } catch (error) {
             console.error('Lỗi khi chấp nhận lời mời kết bạn =>', error);
