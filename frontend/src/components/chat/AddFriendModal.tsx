@@ -60,10 +60,10 @@ const AddFriendModal = () => {
         try {
             const message = await addFriend(searchUser.id, data.message?.trim() || '');
             toast.success(message);
-
             handleCancel();
-        } catch (error) {
+        } catch (error: any) {
             console.log('lỗi xảy ra khi gửi request từ form ', error);
+            toast.error(error.message || 'Lỗi xảy ra khi gửi lời mời kết bạn');
         }
     });
 
