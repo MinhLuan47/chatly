@@ -171,9 +171,17 @@ export const useChatStore = create<ChatState>()(
                 }
             },
             updateConversation: async (conversation: any) => {
-                set((state) => ({
-                    conversations: state.conversations.map((c: any) => (c.id === conversation.id ? conversation : c)),
-                }));
+                set((state) => {
+                    const exists = state.conversations.some((c: any) => c.id === conversation.id);
+                    if (!exists) {
+                        return {
+                            conversations: [conversation, ...state.conversations]
+                        };
+                    }
+                    return {
+                        conversations: state.conversations.map((c: any) => (c.id === conversation.id ? conversation : c)),
+                    };
+                });
             },
             markAsSeen: async (conversationId) => {
                 try {

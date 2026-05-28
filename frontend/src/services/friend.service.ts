@@ -22,7 +22,7 @@ export const friendService = {
     acceptRequest: async (requestId: string) => {
         try {
             const response = await api.post(`/friends/requests/${requestId}/accept`);
-            return response.data.requestAcceptedBy;
+            return response.data;
         } catch (error) {
             console.log('Lỗi khi gửi acceptRequest: ', error);
         }

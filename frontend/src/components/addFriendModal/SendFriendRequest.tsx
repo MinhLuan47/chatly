@@ -20,12 +20,12 @@ const SendFriendRequest = ({ register, loading, searchedUsername, onSubmit, onBa
                 <span className="text-sm text-emerald-500">
                     Tìm thấy <span className="font-semibold">{searchedUsername}</span> rồi nè
                 </span>
-                <div className="space-y-2">
+                <div className="space-y-2 mt-2">
                     <label htmlFor="message" className="text-sm font-semibold">
                         Giới thiệu
                     </label>
                     <Textarea
-                        className="glass border-border/50 focus:border-primary/50 transition-smooth"
+                        className="glass mt-4 border-border/50 focus:border-primary/50 transition-smooth"
                         placeholder="Chào bạn ~ Có thể kết bạn được không?..."
                         {...register('message')}
                         id="message"

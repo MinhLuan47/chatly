@@ -74,14 +74,14 @@ const NewGroupChatModal = () => {
                     <DialogTitle className="capitalize">Tạo nhóm chat mới</DialogTitle>
                 </DialogHeader>
 
-                <form className="space-x-4" onSubmit={handleSubmit}>
+                <form className="space-y-4" onSubmit={handleSubmit}>
                     <div className="space-y-2">
                         <Label htmlFor="groupName" className="text-sm font-semibold">
                             Tên nhóm
                         </Label>
                         <Input
                             id="groupName"
-                            className="glass border-border/50 focus:border-primary transition-smooth"
+                            className="glass mt-2 border-border/50 focus:border-primary transition-smooth"
                             placeholder="Gõ tên nhóm vào đây..."
                             value={groupName}
                             onChange={(e) => setGroupName(e.target.value)}
@@ -94,7 +94,7 @@ const NewGroupChatModal = () => {
                         </Label>
                         <Input
                             id="invite"
-                            className="glass border-border/50 focus:border-primary transition-smooth"
+                            className="glass mt-2 border-border/50 focus:border-primary transition-smooth"
                             placeholder="Tìm theo tên hiển thị..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
