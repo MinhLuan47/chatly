@@ -1,17 +1,16 @@
-# Chat E2E Testing Plan
+# Kế hoạch phát triển và kiểm thử tiếp theo
 
-Tài liệu này lưu trữ kịch bản kiểm thử tự động và kế hoạch sửa đổi mã nguồn.
+Tài liệu này theo dõi các tính năng bổ sung theo yêu cầu của người dùng.
 
-## Các đầu việc chính
-- [x] Bổ sung API upload ảnh `/api/messages/upload` ở backend
-- [x] Cập nhật API gửi tin nhắn (`/api/messages/direct` và `/api/messages/group`) hỗ trợ nhận và lưu `imageUrl`
-- [x] Bổ sung UI chọn file ảnh và upload ở `MessageInput.tsx`
-- [x] Hiển thị hình ảnh tin nhắn ở `MessageItem.tsx`
-- [x] Cấu hình Playwright và viết file kịch bản E2E test `frontend/tests/chat.spec.ts`
-- [x] Thực hiện chạy thử nghiệm kịch bản test để xác minh tự động
-- [x] Xác minh thủ công và hoàn thành dự án
+## PHẦN 1: Gửi ảnh nhóm & Scroll
+- [x] Cập nhật E2E test gửi ảnh vào nhóm và cuộn lên
+- [x] Chạy test, chụp screenshots và commit Git
 
-## Success Criteria
-- Hai người dùng có thể gửi tin nhắn văn bản và hình ảnh real-time qua socket.io.
-- Playwright E2E test chạy tự động thành công 100%.
-- Infinite scroll tin nhắn hoạt động chính xác khi cuộn lên.
+## PHẦN 2: Lời mời kết bạn (Đã nhận & Đã gửi)
+- [ ] Xác minh logic và sửa lỗi lời mời kết bạn
+- [ ] Viết kịch bản test gửi lời mời, chụp màn hình tab Đã gửi & Đã nhận và commit Git
+
+## PHẦN 3: Profile & Settings (Tài khoản, Cấu hình, Bảo mật)
+- [ ] Viết APIs cập nhật Profile và bảo mật ở Backend
+- [ ] Hoàn thiện giao diện 3 tab ở Frontend và kết nối APIs
+- [ ] Viết test, chụp screenshots 3 tab và commit Git
