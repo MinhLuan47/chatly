@@ -4,6 +4,7 @@ import React from 'react';
 import UserAvatar from './UserAvatar';
 import { Card } from '../ui/card';
 import { Badge } from '../ui/badge';
+import { ImageOff } from 'lucide-react';
 
 interface MessageItemProps {
     message: IMessage;
@@ -13,6 +14,7 @@ interface MessageItemProps {
     lastMessageStatus: 'seen' | 'delivered';
 }
 const MessageItem: React.FC<MessageItemProps> = ({ message, index, messages, selectedConver, lastMessageStatus }) => {
+    const [imageError, setImageError] = React.useState(false);
     const prev = index + 1 < messages.length ? messages[index + 1] : undefined;
 
     const isGroupBreak =
@@ -44,13 +46,21 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, index, messages, sel
             >
                 <Card className={cn('p-3', message.isOwn ? 'bg-chat-bubble-sent border-0' : 'bg-chat-bubble-received')} data-testid="message-card">
                     {message.imageUrl && (
-                        <div className="mb-2 max-w-72 overflow-hidden rounded-md border border-border/20">
-                            <img
-                                src={message.imageUrl}
-                                alt="Sent image"
-                                className="w-full h-auto max-h-60 object-cover cursor-pointer hover:opacity-90 transition-smooth"
-                                data-testid="chat-message-image"
-                            />
+                        <div className="mb-2 max-w-72 min-w-[200px] min-h-[150px] flex items-center justify-center bg-slate-950/20 overflow-hidden rounded-md border border-border/20">
+                            {imageError ? (
+                                <div className="flex flex-col items-center gap-2 p-4 text-muted-foreground text-xs text-center" data-testid="image-error-placeholder">
+                                    <ImageOff className="size-8 opacity-60" />
+                                    <span>Không thể tải ảnh</span>
+                                </div>
+                            ) : (
+                                <img
+                                    src={message.imageUrl}
+                                    alt="Sent image"
+                                    className="w-full h-auto max-h-60 object-cover cursor-pointer hover:opacity-90 transition-smooth"
+                                    data-testid="chat-message-image"
+                                    onError={() => setImageError(true)}
+                                />
+                            )}
                         </div>
                     )}
                     {message.content && (
