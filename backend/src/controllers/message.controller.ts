@@ -2,16 +2,39 @@ import { Request, Response } from 'express';
 import prisma from '../libs/prisma.ts';
 import { emitNewMessage, updateConversationAfterCreateMessage } from '../utils/messageHelper.ts';
 import { io } from '../socket/index.ts';
+import { uploadMessageImageFromBuffer } from '../middlewares/upload.middleware.ts';
 
 const messageController = {
+    uploadImage: async (req: Request, res: Response) => {
+        try {
+            const file = req.file;
+            if (!file) {
+                res.status(400).json({ message: 'file is required' });
+                return;
+            }
+
+            const result = (await uploadMessageImageFromBuffer(file.buffer, {})) as { secure_url: string; public_id: string };
+
+            if (!result || !result.secure_url) {
+                res.status(400).json({ message: 'Lỗi tải ảnh lên Cloudinary' });
+                return;
+            }
+
+            res.status(200).json({ success: true, imageUrl: result.secure_url });
+        } catch (error) {
+            console.error('Lỗi upload ảnh chat =>', error);
+            res.status(500).json({ message: 'Lỗi hệ thống khi upload ảnh' });
+        }
+    },
+
     sendDirectMessage: async (req: Request, res: Response) => {
         try {
-            const { recipientId, content, conversationId } = req.body;
+            const { recipientId, content, conversationId, imgUrl } = req.body;
             const senderId = req.user.id;
             let conversation;
 
-            if (!content) {
-                res.status(400).json({ message: 'Thiếu nội dung' });
+            if (!content && !imgUrl) {
+                res.status(400).json({ message: 'Thiếu nội dung hoặc ảnh' });
                 return;
             }
 
@@ -66,7 +89,8 @@ const messageController = {
                 data: {
                     conversationId: conversation.id,
                     senderId: senderId!,
-                    content,
+                    content: content || null,
+                    imageUrl: imgUrl || null,
                 }
             });
 
@@ -81,11 +105,11 @@ const messageController = {
     },
     sendGroupMessage: async (req: Request, res: Response) => {
         try {
-            const { conversationId, content } = req.body;
+            const { conversationId, content, imgUrl } = req.body;
             const senderId = req.user.id;
 
-            if (!content) {
-                res.status(400).json({ message: 'Thiếu nội dung' });
+            if (!content && !imgUrl) {
+                res.status(400).json({ message: 'Thiếu nội dung hoặc ảnh' });
                 return;
             }
 
@@ -93,7 +117,8 @@ const messageController = {
                 data: {
                     conversationId,
                     senderId: senderId!,
-                    content,
+                    content: content || null,
+                    imageUrl: imgUrl || null,
                 }
             });
 

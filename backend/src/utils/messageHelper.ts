@@ -59,6 +59,7 @@ export const emitNewMessage = async (io: any, conversationId: string, message: a
                 id: message.id,
                 senderId: senderId,
                 content: message.content,
+                imageUrl: message.imageUrl,
                 createdAt: message.createdAt,
             },
             lastMessageAt: message.createdAt,

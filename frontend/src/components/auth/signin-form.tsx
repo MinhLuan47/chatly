@@ -76,7 +76,7 @@ export function SigninForm({ className, ...props }: React.ComponentProps<'div'>)
                             </Field>
 
                             <Field>
-                                <Button type="submit">Đăng nhập</Button>
+                                <Button type="submit" className='cursor-pointer'>Đăng nhập</Button>
                             </Field>
                             <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                                 Hoặc tiếp tục với
@@ -89,7 +89,7 @@ export function SigninForm({ className, ...props }: React.ComponentProps<'div'>)
                                             fill="currentColor"
                                         />
                                     </svg>
-                                    <span className="sr-only">Đăng nhập với Google</span>
+                                    <span > Google</span>
                                 </Button>
                                 <Button variant="outline" type="button">
                                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -98,7 +98,7 @@ export function SigninForm({ className, ...props }: React.ComponentProps<'div'>)
                                             fill="currentColor"
                                         />
                                     </svg>
-                                    <span className="sr-only">Đăng nhập với Github</span>
+                                    <span> Github</span>
                                 </Button>
                             </Field>
                             <FieldDescription className="text-center">

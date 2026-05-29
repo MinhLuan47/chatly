@@ -42,8 +42,22 @@ const MessageItem: React.FC<MessageItemProps> = ({ message, index, messages, sel
                     message.isOwn ? 'items-end' : 'items-start',
                 )}
             >
-                <Card className={cn('p-3', message.isOwn ? 'bg-chat-bubble-sent border-0' : 'bg-chat-bubble-received')}>
-                    <p className="text-sm leading-relaxed wrap-break-word">{message.content}</p>
+                <Card className={cn('p-3', message.isOwn ? 'bg-chat-bubble-sent border-0' : 'bg-chat-bubble-received')} data-testid="message-card">
+                    {message.imageUrl && (
+                        <div className="mb-2 max-w-72 overflow-hidden rounded-md border border-border/20">
+                            <img
+                                src={message.imageUrl}
+                                alt="Sent image"
+                                className="w-full h-auto max-h-60 object-cover cursor-pointer hover:opacity-90 transition-smooth"
+                                data-testid="chat-message-image"
+                            />
+                        </div>
+                    )}
+                    {message.content && (
+                        <p className="text-sm leading-relaxed wrap-break-word" data-testid="message-text">
+                            {message.content}
+                        </p>
+                    )}
                 </Card>
 
                 {/* timestamp */}

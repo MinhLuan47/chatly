@@ -113,7 +113,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                             </Field>
 
                             <Field>
-                                <Button type="submit">Tạo tài khoản</Button>
+                                <Button type="submit" className='cursor-pointer'>Tạo tài khoản</Button>
                             </Field>
                             <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
                                 Hoặc tiếp tục với
@@ -126,7 +126,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                                             fill="currentColor"
                                         />
                                     </svg>
-                                    <span className="sr-only">Đăng nhập với Google</span>
+                                    <span> Google</span>
                                 </Button>
                                 <Button variant="outline" type="button">
                                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -135,7 +135,7 @@ export function SignupForm({ className, ...props }: React.ComponentProps<'div'>)
                                             fill="currentColor"
                                         />
                                     </svg>
-                                    <span className="sr-only">Đăng nhập với Github</span>
+                                    <span >Github</span>
                                 </Button>
                             </Field>
                             <FieldDescription className="text-center">

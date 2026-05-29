@@ -28,3 +28,25 @@ export const uploadImageFromBuffer = (buffer: Buffer, options?: any) => {
         uploadStream.end(buffer);
     });
 };
+
+export const uploadMessageImageFromBuffer = (buffer: Buffer, options?: any) => {
+    return new Promise((resolve, reject) => {
+        const uploadStream = cloudinary.uploader.upload_stream(
+            {
+                folder: 'chatly/messages',
+                resource_type: 'image',
+                ...options,
+            },
+            (error, result) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve(result);
+                }
+            },
+        );
+
+        uploadStream.end(buffer);
+    });
+};
+
