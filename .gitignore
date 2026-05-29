@@ -119,3 +119,12 @@ backend/temp/
 # Docker override files
 # =========================
 docker-compose.override.yml
+
+# =========================
+# Testing (Playwright / Screenshots)
+# =========================
+frontend/tests/
+frontend/test-results/
+playwright-report/
+**/test-results/
+**/*.png
